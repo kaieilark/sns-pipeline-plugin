@@ -13,7 +13,7 @@ sns-pipeline install
 
 - `install` が Claude Code スキル（`~/.claude/skills/`）と Codex プロンプト（`~/.codex/prompts/`）を導入し、
   ランタイム `~/.sns-pipeline/`（`SNS_PIPELINE_HOME` で変更可）に `config.json` 雛形を作る。
-- 特定バージョンを固定したい場合: `npm i -g github:kaieilark/sns-pipeline-plugin#v1.1.0`（タグ運用時）。
+- 特定バージョンを固定したい場合: `npm i -g github:kaieilark/sns-pipeline-plugin#v1.2.0`（タグ運用時）。
 
 ## 2. npm 公開レジストリ（無効・ライセンス上）
 
@@ -39,7 +39,7 @@ npm pack        # kaieilark-sns-pipeline-<version>.tgz を生成
 受け取った側:
 
 ```bash
-npm install -g ./kaieilark-sns-pipeline-1.1.0.tgz
+npm install -g ./kaieilark-sns-pipeline-1.2.0.tgz
 sns-pipeline install
 ```
 

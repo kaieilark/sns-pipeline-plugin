@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "purpose": "バックボーンストック（継続蓄積）テーブル定義。特定のチャットに随時書き溜められる、事業への思い・方針・エピソードを蓄積する。全テーマ共通の1テーブル（テーマで分けない）。",
+    "spec": "lark-cli base +table-create の --fields にそのまま渡せる field JSON。先頭要素が primary フィールドになる。",
+    "note": "themes/<key>/backbone.md（静的・随時編集）とは別物。こちらは時系列ログで、engine/ingest_backbone_stock.py が自動で追記していく。人が直接レコードを編集する運用ではない。"
+  },
+  "name": "バックボーンストック",
+  "fields": [
+    { "name": "タイトル", "type": "text", "description": "本文先頭の要旨（自動生成・40字以内）" },
+    { "name": "元テキスト", "type": "text", "description": "チャット投稿の原文" },
+    { "name": "投稿者名", "type": "text", "description": "チャットでの投稿者" },
+    { "name": "メッセージ投稿日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "元メッセージがチャットに投稿された日時" },
+    { "name": "取込日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "パイプラインが本レコードを作成した日時" },
+    { "name": "取込元メッセージID", "type": "text", "description": "Larkメッセージの message_id（om_...）。冪等性キー" }
+  ]
+}

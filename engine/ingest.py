@@ -18,6 +18,14 @@ SNS投稿パイプライン - チャット差分取込スクリプト (ingest.py
     - Python 3 標準ライブラリのみ
     - lark-cli (Base書込はテナントのプロファイル PROFILE / --as bot、チャット読取は CHAT_PROFILE / --as user)
 
+取込対象:
+    - チャットに投稿されたテキスト/postメッセージは、送信者が人間かbot連携(アプリ経由投稿)かを
+      問わず取込対象とする(is_target 参照)。送信者種別で絞ると、bot連携で投稿された内容が
+      無条件に取りこぼされるため、この絞り込みはしない。
+    - 1メッセージ = 1参考元候補として扱う。時間的に近接した複数メッセージ(例: URL投稿の直後に
+      別メッセージが続く等)を、内容を確認せず同一の話題として統合してはならない
+      (compose 側の絶対ルールでも明記。ingest.py はメッセージ単位でレコードを分離する設計を保つ)。
+
 冪等性:
     - state.json の themes.<THEME_KEY> に最終処理済み create_time(ms) と処理済み message_id(直近N件)を保持
     - message_id による重複判定で二重取込を防止
@@ -258,10 +266,12 @@ def create_time_ms(msg):
 
 
 def is_target(msg):
+    """取込対象メッセージか判定(システム・非テキスト系のみ除外)。
+    チャットに投稿された内容は送信者が人間・アプリ(bot連携等)を問わず参考元候補とする。
+    かつて sender_type=="user" に限定していたが、bot連携で投稿された内容が
+    無条件に取りこぼされる問題があったため撤廃した(教訓: 発信者を絞らず、
+    テキスト/postメッセージであることだけを条件にする)。"""
     if msg.get("deleted"):
-        return False
-    sender = msg.get("sender") or {}
-    if sender.get("sender_type") != "user":
         return False
     if msg.get("msg_type") not in ("text", "post"):
         return False

@@ -8,7 +8,10 @@
     "THEMES[].TABLE_ID_POSTS = テーマごとに分けた投稿管理テーブル。テーマA用とテーマB用で別テーブルにする（設計要件）。",
     "THEMES[].BACKBONE_FILE / IMAGE_TASTE_FILE = テーマ固有の背景思想・画像テイスト定義ファイル（SNS_PIPELINE_HOME からの相対パス）。後から編集可能。",
     "THEMES[].LOGO_FILE = 画像に必ず入れるロゴ（任意）。空なら画像にロゴを入れない。",
-    "テーマは THEMES に要素を足すだけで増やせる（sns-theme / sns-settings スキルが面倒を見る）。"
+    "テーマは THEMES に要素を足すだけで増やせる（sns-theme / sns-settings スキルが面倒を見る）。",
+    "BACKBONE_STOCK = 継続蓄積バックボーン（THEMES[].BACKBONE_FILEとは別物・混同注意）。特定のチャットに随時書き溜められる、事業への思い・方針・エピソードをLark Baseへ蓄積し続ける独立機能。",
+    "  THEMES[].BACKBONE_FILE が『いつでも書き換えられる背景設定シート』なのに対し、BACKBONE_STOCK は『時系列で積み上がっていく生のメモ・語り』。全テーマ共通のレンズとして本文作成時に全件参照する（素材の代わりにはしない）。",
+    "  ENABLED=false またはこのブロック自体が空でも動作する（無くても本文作成は BACKBONE_FILE と要約だけで成立する）。"
   ],
   "PROFILE": "",
   "CHAT_PROFILE": "",
@@ -49,6 +52,13 @@
       "LOGO_FILE": ""
     }
   ],
+  "BACKBONE_STOCK": {
+    "ENABLED": false,
+    "CHAT_ID": "",
+    "CHAT_NAME": "バックボーンストック",
+    "WEBHOOK_URL": "",
+    "TABLE_ID": ""
+  },
   "INITIAL_LOOKBACK_DAYS": 30,
   "PAGE_SIZE": 50,
   "PROCESSED_ID_KEEP": 500,

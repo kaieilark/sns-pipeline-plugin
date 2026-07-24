@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # SNS投稿パイプライン 定期ラン ラッパー（launchd / cron 用・エージェント非依存）
 #
-# 役割: 取込(ingest.py) → compose(エージェントに compose_prompt.md を実行させる) の薄いラッパー。
+# 役割: 取込(ingest.py) → 取込(ingest_backbone_stock.py・任意/失敗非致命)
+#       → compose(エージェントに compose_prompt.md を実行させる) の薄いラッパー。
 # 実データは SNS_PIPELINE_HOME(既定 ~/.sns-pipeline)。このスクリプト自体は配布物(engine)側。
 #
 # 環境変数:
@@ -49,13 +50,25 @@ if [ -n "$MISSING" ]; then
   exit 0
 fi
 
-# 1) 取込
+# 1) 取込（素材案）
 log "取込 (ingest.py) 開始"
 SNS_PIPELINE_HOME="$HOME_DIR" "$PYTHON_BIN" "$ENGINE_DIR/ingest.py"
 INGEST_RC=$?
 log "取込 終了 rc=$INGEST_RC"
 if [ "$INGEST_RC" = "2" ]; then
   log "設定未完了のため終了。"; exit 0
+fi
+
+# 1b) 取込（バックボーンストック・任意機能・失敗/未設定でもパイプライン全体は止めない）
+log "取込 (ingest_backbone_stock.py) 開始"
+SNS_PIPELINE_HOME="$HOME_DIR" "$PYTHON_BIN" "$ENGINE_DIR/ingest_backbone_stock.py"
+BB_RC=$?
+if [ "$BB_RC" = "0" ]; then
+  log "バックボーンストック取込 完了"
+elif [ "$BB_RC" = "2" ]; then
+  log "バックボーンストック: 未設定または無効(BACKBONE_STOCK.ENABLED)。スキップして継続します。"
+else
+  log "バックボーンストック取込 失敗 rc=$BB_RC。スキップして継続します（次回ランで再試行）。"
 fi
 
 # 2) compose（エージェントに指示書を実行させる）
