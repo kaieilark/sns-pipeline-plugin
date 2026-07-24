@@ -1,0 +1,23 @@
+{
+  "_meta": {
+    "purpose": "投稿管理テーブル定義。テーマごとに1テーブル作成する（テーマA用・テーマB用で別テーブル。設計要件）。",
+    "spec": "lark-cli base +table-create の --fields にそのまま渡せる field JSON。先頭要素が primary フィールドになる。",
+    "link_placeholder": "__SOURCES_TABLE_ID__ は setup が参考元テーブル作成後に実 table_id へ置換する。参照元は共通の参考元テーブルへ双方向リンクする。",
+    "naming": "テーブル名は『投稿管理_<テーマ名>』を推奨（setup が __THEME_NAME__ を置換）。"
+  },
+  "name": "投稿管理_​__THEME_NAME__",
+  "fields": [
+    { "name": "タイトル", "type": "text", "description": "投稿の管理用タイトル（30字以内・3SNS共通の管理用）" },
+    { "name": "本文（Instagram）", "type": "text", "description": "Instagramキャプション。冒頭125字で要点、末尾にハッシュタグ5〜10個。入力は参考元の要約フィールドのみ" },
+    { "name": "本文（Threads）", "type": "text", "description": "Threads向け本文。500字以内・会話調。入力は参考元の要約フィールドのみ" },
+    { "name": "本文（X）", "type": "text", "description": "X向け本文。全角140字以内・ハッシュタグ1〜2個。入力は参考元の要約フィールドのみ" },
+    { "name": "投稿済（Instagram）", "type": "checkbox", "description": "Instagram本文を確認し問題なければチェック（レビュー兼・投稿記録用。自動投稿機能ではない）" },
+    { "name": "投稿済（Threads）", "type": "checkbox", "description": "Threads本文を確認し問題なければチェック（レビュー兼・投稿記録用）" },
+    { "name": "投稿済（X）", "type": "checkbox", "description": "X本文を確認し問題なければチェック（レビュー兼・投稿記録用）" },
+    { "name": "画像", "type": "attachment", "description": "画像生成モデルで作成した参考画像（内容に応じて1〜3枚）" },
+    { "name": "参照元", "type": "link", "link_table": "__SOURCES_TABLE_ID__", "bidirectional": true, "bidirectional_link_field_name": "使用先投稿", "description": "素材にした参考元レコードへのリンク（双方向）" },
+    { "name": "画像プロンプト", "type": "text", "description": "画像生成に使用したプロンプト（枚数分を番号付きで記録）。再生成・トーン調整用" },
+    { "name": "作成日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "パイプラインが本レコードを作成した日時" },
+    { "name": "備考", "type": "text", "description": "先頭に『参考元: recXXX』を必ず含む（重複作成防止の突合キー）＋特記事項" }
+  ]
+}

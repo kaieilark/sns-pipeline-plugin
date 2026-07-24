@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Lark クイック送信 - 設定</title>
+<style>
+  :root {
+    color-scheme: light dark;
+  }
+  body {
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    width: 340px;
+    margin: 0;
+    padding: 16px;
+    background: #ffffff;
+    color: #1a1a1a;
+    line-height: 1.7;
+    line-break: strict;
+    font-feature-settings: "palt";
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: #1e1e1e;
+      color: #f0f0f0;
+    }
+  }
+  h1 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  input[type="text"] {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+    font-size: 13px;
+    border: 1px solid #888888;
+    border-radius: 4px;
+    background: #ffffff;
+    color: #1a1a1a;
+    margin-bottom: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    input[type="text"] {
+      background: #2b2b2b;
+      color: #f0f0f0;
+      border-color: #777777;
+    }
+  }
+  .buttons {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  button {
+    flex: 1;
+    min-height: 44px;
+    padding: 11px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: 1px solid #1c4e9c;
+    border-radius: 4px;
+    background: #1c4e9c;
+    color: #ffffff;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #163f7f;
+  }
+  button.secondary {
+    background: #ffffff;
+    color: #1c4e9c;
+  }
+  @media (prefers-color-scheme: dark) {
+    button.secondary {
+      background: #1e1e1e;
+      color: #7fb0ff;
+      border-color: #7fb0ff;
+    }
+  }
+  #status {
+    font-size: 12px;
+    min-height: 16px;
+    word-break: break-word;
+  }
+  #status.error {
+    color: #c0392b;
+  }
+  #status.success {
+    color: #1e7e34;
+  }
+  @media (prefers-color-scheme: dark) {
+    #status.error {
+      color: #ff8a75;
+    }
+    #status.success {
+      color: #6fdc8c;
+    }
+  }
+</style>
+</head>
+<body>
+  <h1>Lark クイック送信 - 設定</h1>
+  <label for="webhookUrl">Lark Webhook URL</label>
+  <input type="text" id="webhookUrl" placeholder="https://open.larksuite.com/open-apis/bot/v2/hook/...">
+  <div class="buttons">
+    <button id="saveBtn">保存</button>
+    <button id="testBtn" class="secondary">テスト送信</button>
+  </div>
+  <div id="status"></div>
+  <script src="options.js"></script>
+</body>
+</html>

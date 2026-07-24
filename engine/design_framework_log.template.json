@@ -1,0 +1,4 @@
+{
+  "_readme": "画像レイアウトの『フレームワーク（骨格）』使用履歴。テーマごとに1ファイル（themes/<key>/design_framework_log.json）。直近10件で同じフレームワークが被らないようローテーション管理する。history は末尾追記のみ。compose_prompt.md 5-0-2 参照。",
+  "history": []
+}

@@ -1,0 +1,42 @@
+{
+  "_meta": {
+    "purpose": "素材案（参考元）テーブル定義。全テーマ共通の1テーブル。CHAT_ID で取り込み、『テーマ』フィールドで振り分ける。",
+    "spec": "lark-cli base +table-create の --fields にそのまま渡せる field JSON。先頭要素が primary フィールドになる（タイトルを先頭に置く）。",
+    "note": "『テーマ』の options はセットアップ時に config.THEMES の NAME で置換する（setup が自動生成）。ここでは空の雛形にしてある。"
+  },
+  "name": "参考元",
+  "fields": [
+    { "name": "タイトル", "type": "text", "description": "参照素材のタイトル。URL記事=記事タイトル / コメント=本文先頭の要旨" },
+    { "name": "種別", "type": "select", "multiple": false,
+      "options": [
+        { "name": "URL記事", "hue": "Blue", "lightness": "Light" },
+        { "name": "コメント", "hue": "Turquoise", "lightness": "Light" }
+      ],
+      "description": "URLを含む投稿=URL記事 / テキストのみ=コメント" },
+    { "name": "テーマ", "type": "select", "multiple": false,
+      "options": [],
+      "description": "この素材がどのテーマ向けか。取込元チャット(CHAT_ID)から自動判定。options はセットアップ時に config.THEMES の NAME で生成する" },
+    { "name": "URL", "type": "text", "style": { "type": "url" }, "description": "参照記事URL。種別=コメントの場合は空" },
+    { "name": "元テキスト", "type": "text", "description": "コメント本文またはURL投稿の添え書き。URL記事の本文は投稿生成に直接使わない（要約フィールド経由が原則）" },
+    { "name": "要約", "type": "text", "description": "分析の整理結果。投稿本文生成の唯一の入力とする中核フィールド（元記事固有文言の混入防止ワンクッション）" },
+    { "name": "分析ステータス", "type": "select", "multiple": false,
+      "options": [
+        { "name": "未分析", "hue": "Gray", "lightness": "Light" },
+        { "name": "分析済", "hue": "Green", "lightness": "Light" },
+        { "name": "対象外", "hue": "Yellow", "lightness": "Light" },
+        { "name": "エラー", "hue": "Red", "lightness": "Light" }
+      ],
+      "description": "未分析=取込直後 / 分析済=要約書込済 / 対象外=素材にしない / エラー=分析失敗（自動再試行しない）" },
+    { "name": "取込元メッセージID", "type": "text", "description": "Larkメッセージの message_id（om_...）。冪等性キー。重複取込を防止する" },
+    { "name": "投稿者名", "type": "text", "description": "チャット投稿者の表示名" },
+    { "name": "メッセージ投稿日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "元メッセージがチャットに投稿された日時" },
+    { "name": "取込日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "パイプラインが本レコードを作成した日時" },
+    { "name": "使用状況", "type": "select", "multiple": false,
+      "options": [
+        { "name": "未使用", "hue": "Blue", "lightness": "Light" },
+        { "name": "使用済", "hue": "Green", "lightness": "Light" }
+      ],
+      "description": "投稿本文の生成に使用したら使用済へ更新" },
+    { "name": "エラー詳細", "type": "text", "description": "分析ステータス=エラー時の原因記録" }
+  ]
+}

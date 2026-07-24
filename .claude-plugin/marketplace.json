@@ -1,0 +1,16 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "sns-pipeline",
+  "description": "テーマ別SNS投稿パイプライン。Lark素材→要約→本文3種→参考画像→Baseへ蓄積。Claude Code / Codex 両対応。",
+  "owner": {
+    "name": "MOMIJI Project"
+  },
+  "plugins": [
+    {
+      "name": "sns-pipeline",
+      "description": "テーマ別にSNS投稿の下書きを作りLark Baseへ蓄積する配布用パイプライン。テーマ複数対応・投稿テーブルのテーマ別分割・バックボーン/画像テイストの後編集・画像骨格を直近10件で非重複。",
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}

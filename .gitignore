@@ -1,0 +1,32 @@
+# === 配布物リポジトリ用 .gitignore ===
+# ここは配布用テンプレートのみを置く。会員（テナント）の実データは絶対にコミットしない。
+
+# ランタイム実データ（本来 ~/.sns-pipeline に置かれ、リポジトリ外。誤配置対策で二重に無視）
+config.json
+state.json
+lastrun.stamp
+/themes/
+!/templates/themes-demo/
+design_framework_log.json
+!/engine/design_framework_log.template.json
+
+# 実行時生成物
+/logs/
+/images/
+/tmp/
+
+# 秘密・資格情報の類（万一の混入防止）
+*.env
+.env*
+*.pem
+*.p8
+*.p12
+*.key
+*service_account*.json
+*credentials*.json
+
+# OS/エディタ
+.DS_Store
+*.bak
+__pycache__/
+*.pyc
