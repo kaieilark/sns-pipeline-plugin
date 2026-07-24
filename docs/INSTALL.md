@@ -15,28 +15,11 @@ sns-pipeline install
   ランタイム `~/.sns-pipeline/`（`SNS_PIPELINE_HOME` で変更可）に `config.json` 雛形を作る。
 - 特定バージョンを固定したい場合: `npm i -g github:kaieilark/sns-pipeline-plugin#v1.1.0`（タグ運用時）。
 
-## 2. npm 公開レジストリ
+## 2. npm 公開レジストリ（無効・ライセンス上）
 
-公開npmに publish 済みなら:
-
-```bash
-npm install -g @kaieilark/sns-pipeline
-sns-pipeline install
-```
-
-### 公開npmへ publish する手順（メンテナ向け）
-
-スコープ付きパッケージ `@kaieilark/sns-pipeline` を公開npmに出すには、npmjs.com のアカウント（＋
-`kaieilark` という npm org もしくはユーザー）が必要。
-
-```bash
-npm login                       # npmjs.com のアカウントでログイン
-npm publish --access public     # publishConfig.access=public 済み
-```
-
-- 初回は org `kaieilark` を npmjs.com 側で作成しておく（無い場合はスコープ名をアカウント名に合わせる）。
-- 公開後、バージョンを上げるたびに `npm version patch|minor|major && npm publish`。
-- **注意**: 公開npmの publish は取り消しが難しい（72時間以降は unpublish 制限、名前は予約）。名前・版を確認してから実行する。
+**このパッケージは再配布を厳格に禁止しているため、公開npmレジストリ（npmjs.com）への publish は行わない。**
+`package.json` に `"private": true` を設定してあり、`npm publish` は実行できない（誤公開防止）。
+配布は下記の「1. GitHubから」または「4. tarball」の、著作者が管理する経路のみとする。
 
 ## 3. git clone
 

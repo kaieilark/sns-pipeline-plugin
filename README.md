@@ -34,23 +34,14 @@ sns-pipeline doctor      # 前提を点検
 npx github:kaieilark/sns-pipeline-plugin install
 ```
 
-### 方法B: npm レジストリ（公開後）
-
-公開npmに publish 済みなら:
-
-```bash
-npm install -g @kaieilark/sns-pipeline
-sns-pipeline install
-```
-
-### 方法C: git clone
+### 方法B: git clone
 
 ```bash
 git clone https://github.com/kaieilark/sns-pipeline-plugin.git ~/sns-pipeline-plugin
 cd ~/sns-pipeline-plugin && ./install.sh
 ```
 
-### 方法D: tarball（オフライン配布）
+### 方法C: tarball（オフライン配布）
 
 `npm pack` で作った `.tgz`、または配布された tar を渡された場合:
 
@@ -108,4 +99,6 @@ BASE_TOKEN・チャットID・Webhook・実際のバックボーン内容・ロ�
 
 ## ライセンス
 
-Source-available（閲覧可・権利留保）。詳細は [`LICENSE`](LICENSE)。再配布・再販・第三者への提供は要許諾。
+**プロプライエタリ（All Rights Reserved・ソース閲覧可）。再配布は厳格に禁止。**
+
+ソースは公開・閲覧可能だが、権利はすべて留保する。**再配布（コピー・再アップロード・ミラー・別レジストリやマーケットプレイスへの掲載・第三者への配布/転載/貸与・フォークしての配布・他製品への同梱・再販・サブライセンス・サービスとしての提供）は、いかなる形態でも書面による許諾なしに固く禁止する。** 許諾された利用者が自社の1インスタンスを運用するための利用のみ認める。詳細は [`LICENSE`](LICENSE)。

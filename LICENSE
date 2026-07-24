@@ -1,10 +1,36 @@
+PROPRIETARY LICENSE — ALL RIGHTS RESERVED
 Copyright (c) 2026 MOMIJI Project
 
-Source-available. The source in this repository is publicly viewable, but all
-rights are reserved. You may evaluate and install this package to operate your
-own instance. Redistribution, resale, sublicensing, or offering it as a service
-to third parties requires prior written permission from the copyright holder.
+This software and its accompanying files (the "Software") are proprietary and
+source-available: the source is publicly viewable, but ALL RIGHTS ARE RESERVED.
 
-This package contains only distribution templates and engine code. It intentionally
-contains no tenant data (Base tokens, chat IDs, webhooks, backbone content, logos).
-Each tenant supplies their own credentials and content at setup time.
+1. PERMITTED
+   Parties explicitly authorized by the copyright holder may install and use the
+   Software to operate their own single instance, and may view the source for the
+   purpose of evaluation and operation.
+
+2. REDISTRIBUTION IS STRICTLY PROHIBITED
+   Redistribution of the Software, in whole or in part, in source or compiled form,
+   modified or unmodified, is STRICTLY PROHIBITED without prior written permission
+   from the copyright holder. Without limitation, the following are prohibited:
+     - copying, re-hosting, mirroring, or re-uploading the Software to any other
+       location, registry, package manager, marketplace, or repository;
+     - distributing, publishing, sharing, lending, or transferring the Software or
+       any copy of it to any third party;
+     - forking, bundling, embedding, or including the Software in another product
+       or distribution intended to be conveyed to others;
+     - selling, reselling, sublicensing, renting, leasing, or offering the Software
+       (or access to it) as a service to third parties;
+     - creating derivative works for the purpose of any of the above.
+
+3. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES,
+   OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+4. NOTE ON CONTENT
+   The Software contains only distribution templates and engine code. It contains
+   no tenant data (Base tokens, chat IDs, webhooks, backbone content, logos). Each
+   authorized tenant supplies their own credentials and content at setup time.
+
+For redistribution rights or any other permission, contact the copyright holder.

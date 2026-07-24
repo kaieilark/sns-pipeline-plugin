@@ -37,10 +37,7 @@
   ],
   "author": "MOMIJI Project",
   "license": "SEE LICENSE IN LICENSE",
-  "private": false,
-  "publishConfig": {
-    "access": "public"
-  },
+  "private": true,
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kaieilark/sns-pipeline-plugin.git"
