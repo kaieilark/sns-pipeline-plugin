@@ -1,0 +1,48 @@
+{
+  "name": "@kaieilark/sns-pipeline",
+  "version": "1.1.0",
+  "description": "テーマ別SNS投稿パイプライン（Lark素材→要約→Instagram/Threads/X本文→参考画像→Baseへ蓄積）。Claude Code / Codex 両対応の配布用プラグイン。",
+  "bin": {
+    "sns-pipeline": "bin/cli.js"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=16"
+  },
+  "files": [
+    "bin/",
+    "skills/",
+    "engine/",
+    "templates/",
+    "extension/",
+    "codex/",
+    "docs/",
+    ".claude-plugin/",
+    "AGENTS.md",
+    "README.md",
+    "LICENSE",
+    "install.sh"
+  ],
+  "scripts": {
+    "postinstall": "node bin/cli.js hint || true"
+  },
+  "keywords": [
+    "sns",
+    "lark",
+    "pipeline",
+    "claude-code",
+    "codex",
+    "instagram",
+    "threads"
+  ],
+  "author": "MOMIJI Project",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaieilark/sns-pipeline-plugin.git"
+  }
+}

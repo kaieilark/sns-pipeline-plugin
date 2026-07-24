@@ -1,11 +1,10 @@
 Copyright (c) 2026 MOMIJI Project
 
-All rights reserved.
+Source-available. The source in this repository is publicly viewable, but all
+rights are reserved. You may evaluate and install this package to operate your
+own instance. Redistribution, resale, sublicensing, or offering it as a service
+to third parties requires prior written permission from the copyright holder.
 
-This is a private, proprietary distribution package. It may be provided to
-specific tenants (client companies) under a separate agreement. Redistribution,
-sublicensing, or public disclosure without written permission is not permitted.
-
-The package contains only distribution templates and engine code. It intentionally
+This package contains only distribution templates and engine code. It intentionally
 contains no tenant data (Base tokens, chat IDs, webhooks, backbone content, logos).
 Each tenant supplies their own credentials and content at setup time.

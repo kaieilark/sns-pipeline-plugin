@@ -14,44 +14,98 @@ Larkチャットに集めた素材（記事URL・コメント）から、**テ�
 - 記事は「読み手の教育 → 問い合わせへの誘導」方針。画像は画像生成モデルのみで文字・ロゴまで描く。
 - 素材投入用の **Chrome拡張機能**（Lark クイック送信）同梱。右クリックでテーマ別チャットへ投げ込める。
 
-## 構成
+## インストール
 
-```
-.claude-plugin/     Claude Code プラグイン定義（marketplace.json / plugin.json）
-AGENTS.md           Codex 用のエントリ（両エージェント向けの全体説明）
-skills/             Claude Code スキル（sns-run / sns-settings / sns-theme / sns-setup）
-codex/prompts/      Codex プロンプト（同名）
-engine/             ロジックの正本（ingest.py / compose_prompt.md / theme・settings・setup 指示書 / run_pipeline.sh）
-templates/          設定・テーブルスキーマ・バックボーン/画像テイストの雛形＋架空デモテーマ
-extension/          Lark クイック送信 Chrome拡張機能（Webhookはブラウザ保存・配布物にデータなし）
-docs/               セットアップ手順
-install.sh          スキル/プロンプトの導入とランタイム雛形の作成
-```
+前提: Node.js 16+ / Python 3 / [lark-cli](https://github.com/) / Claude Code もしくは Codex。
 
-## 導入（クイックスタート）
+### 方法A: npm（GitHubから・最短）
+
+公開リポジトリなので、認証なしでそのまま入る。
 
 ```bash
-git clone <this private repo> ~/sns-pipeline-plugin
-cd ~/sns-pipeline-plugin
-./install.sh
+npm install -g github:kaieilark/sns-pipeline-plugin
+sns-pipeline install     # スキル/プロンプト/ランタイム雛形を導入
+sns-pipeline doctor      # 前提を点検
 ```
 
-その後:
+`npx` で単発実行もできる:
+
+```bash
+npx github:kaieilark/sns-pipeline-plugin install
+```
+
+### 方法B: npm レジストリ（公開後）
+
+公開npmに publish 済みなら:
+
+```bash
+npm install -g @kaieilark/sns-pipeline
+sns-pipeline install
+```
+
+### 方法C: git clone
+
+```bash
+git clone https://github.com/kaieilark/sns-pipeline-plugin.git ~/sns-pipeline-plugin
+cd ~/sns-pipeline-plugin && ./install.sh
+```
+
+### 方法D: tarball（オフライン配布）
+
+`npm pack` で作った `.tgz`、または配布された tar を渡された場合:
+
+```bash
+npm install -g ./kaieilark-sns-pipeline-1.1.0.tgz
+sns-pipeline install
+```
+
+インストール方法の詳細と、公開npmへの publish 手順は [`docs/INSTALL.md`](docs/INSTALL.md)。
+
+## 使い方（導入後）
+
+エージェント側で:
+
 1. `~/.sns-pipeline/config.json` に、自社の `PROFILE`（lark-cli プロファイル）・`BASE_TOKEN` 等を設定
 2. `/sns-setup` … Base テーブル作成・拡張機能導入・動作確認
 3. `/sns-settings` … テーマ追加・バックボーン・画像テイストの設定
 4. `/sns-run` … 取込→投稿作成
 
+- **Claude Code**: `skills/` のスキルを使う（`sns-run` / `sns-settings` / `sns-theme` / `sns-setup`）。
+- **Codex**: `~/.codex/prompts/` の同名プロンプトを `/sns-run` 等で呼ぶ（`AGENTS.md` も参照）。
+
 詳細は [`docs/SETUP.md`](docs/SETUP.md)。
 
-## 重要: 会員データについて
+## CLI
 
-このリポジトリは**配布用テンプレートとエンジンのみ**。BASE_TOKEN・チャットID・Webhook・実際の
-バックボーン内容・ロゴなどの**テナント固有データは一切含まない**。実データは各テナントの
-`SNS_PIPELINE_HOME`（既定 `~/.sns-pipeline`）にのみ置かれ、リポジトリには入らない（`.gitignore` で二重防御）。
+```
+sns-pipeline install   スキル / Codexプロンプト / ランタイム雛形を導入
+sns-pipeline doctor    前提（node / python3 / lark-cli / ~/.claude / ~/.codex）を点検
+sns-pipeline path      パッケージの配置先を表示
+sns-pipeline help
+```
 
-## Claude Code / Codex 両対応
+## 構成
 
-- Claude Code: `skills/` のスキル（マーケットプレイス導入 or `install.sh`）。
-- Codex: `codex/prompts/` を `~/.codex/prompts/` へ（`install.sh` が実施）＋ `AGENTS.md` を参照。
-- どちらもロジックは `engine/` を共有するため、挙動は同じ。
+```
+package.json        npm パッケージ定義（bin: sns-pipeline）
+bin/cli.js          インストーラ CLI（依存ゼロ）
+.claude-plugin/     Claude Code プラグイン定義（marketplace.json / plugin.json）
+AGENTS.md           Codex 用エントリ（両エージェント向けの全体説明）
+skills/             Claude Code スキル（sns-run / sns-settings / sns-theme / sns-setup）
+codex/prompts/      Codex プロンプト（同名）
+engine/             ロジックの正本（ingest.py / compose_prompt.md / theme・settings・setup 指示書 / run_pipeline.sh）
+templates/          設定・テーブルスキーマ・バックボーン/画像テイストの雛形＋架空デモテーマ
+extension/          Lark クイック送信 Chrome拡張機能（Webhookはブラウザ保存・配布物にデータなし）
+docs/               INSTALL / SETUP 手順
+```
+
+## 重要: データについて
+
+このリポジトリは**配布用テンプレートとエンジンのみ**で、公開しても安全なように作られている。
+BASE_TOKEN・チャットID・Webhook・実際のバックボーン内容・ロゴなどの**テナント固有データは一切含まない**。
+実データは各テナントの `SNS_PIPELINE_HOME`（既定 `~/.sns-pipeline`）にのみ置かれ、リポジトリには入らない
+（`.gitignore` で二重防御）。
+
+## ライセンス
+
+Source-available（閲覧可・権利留保）。詳細は [`LICENSE`](LICENSE)。再配布・再販・第三者への提供は要許諾。
