@@ -1,5 +1,17 @@
 # 変更履歴
 
+## 1.4.0
+
+- **「テーマ」を正規化されたマスターテーブル構成に変更**（実運用での再設計を反映）。従来は参考元テーブルに「テーマ」を単一選択(select)として持たせ、テーマ追加のたびに選択肢を足していたが、複数テーブル（参考元・素材ライブラリ等）に同じ選択肢を重複させると同期漏れの温床になるため、テーママスターテーブル（`THEME_MASTER_TABLE_ID`。各テーマ＋「共通」が1レコード）を新設。参考元テーブルの「テーマ」は「テーマリンク」（link・書込対象）＋「テーマ」（formula: `FIRST([テーマリンク].[NAME])`・読取専用）の構成に変更。テーマの追加・改名はマスター側の1レコードを直すだけで全体に反映される。
+  - `templates/schema.theme_master.json` を新設。`templates/schema.sources.json` の「テーマ」フィールドをlink+formula構成に更新。
+  - `templates/config.example.json`: `THEME_MASTER_TABLE_ID` / `SHARED_THEME_RECORD_ID`（トップレベル）、`THEMES[].THEME_RECORD_ID` を追加。
+  - `engine/ingest.py`: `load_themes()` が `THEME_RECORD_ID` を必須化。「テーマ」への書込を `[{"id": theme_record_id}]`（link CellValue）に変更。
+  - `engine/setup_prompt.md` §2 をテーママスター作成込みの手順に全面改訂。`engine/theme_prompt.md` B（追加）にテーママスターへのレコード作成手順を追加（select選択肢の追加操作は廃止）。
+- **素材ライブラリ（任意機能）を新設**。画像生成時に参照する既定素材（店舗オーナー写真・ロゴ等）をBaseで管理し、使用フラグ(checkbox)ONの素材だけを参照候補にする。備考欄の説明（例: 服装の変更は許可します）がそのまま画像生成プロンプトに反映される。テーマリンクで対象テーマ、または「共通」を指定できる。
+  - `templates/schema.materials.json` を新設。`config.example.json` に `MATERIALS_TABLE_ID` を追加。
+  - `engine/compose_prompt.md` §5-0 に、使用フラグONかつ対象テーマ（または共通）に一致する素材を取得し参照画像・プロンプトへ反映する手順を追加。`engine/setup_prompt.md` §3-3（新設）。
+- 上記2点は `engine/settings_prompt.md`（メニュー項目追加）・各 skill / Codex プロンプト・`AGENTS.md` / `README.md` / `docs/SETUP.md` に反映。
+
 ## 1.3.0
 
 - **バックボーンストックのテーブル設計を修正**（実運用での再設計を反映）。固定（プライマリ）フィールドを「タイトル」（内容依存のテキスト）から「ID」（auto_number・自動採番）に変更。「投稿者名」をLark標準のuser型フィールド化し、実在ユーザー（open_id）のときだけ `[{"id": open_id}]` を設定（bot/アプリ投稿は空のまま。名前・アイコンをLarkが自動解決し、SENDER_NAME_MAPのような手動マップが不要に）。書込形式を `{"fields":[...],"rows":[...]}` から `{"create_records":[...]}` に変更。`templates/schema.backbone_stock.json` と `engine/ingest_backbone_stock.py` を全面更新。

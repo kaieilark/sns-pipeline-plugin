@@ -17,8 +17,8 @@
 
 ## A. 一覧表示（list）
 `cat $HOME_DIR/config.json` を読み、`THEMES` を表で示す:
-`THEME_KEY / NAME / ENABLED / CHAT_ID / TABLE_ID_POSTS / READER / GOAL / CTA_URL / BACKBONE_FILE / IMAGE_TASTE_FILE / LOGO_FILE`。
-各テーマの `BACKBONE_FILE` が空か雛形のままなら「バックボーン未設定」、`IMAGE_TASTE_FILE` が雛形のままなら「画像テイスト未設定」と付記する。
+`THEME_KEY / NAME / THEME_RECORD_ID / ENABLED / CHAT_ID / TABLE_ID_POSTS / READER / GOAL / CTA_URL / BACKBONE_FILE / IMAGE_TASTE_FILE / LOGO_FILE`。
+各テーマの `BACKBONE_FILE` が空か雛形のままなら「バックボーン未設定」、`IMAGE_TASTE_FILE` が雛形のままなら「画像テイスト未設定」、`THEME_RECORD_ID` が空なら「テーママスター未登録（要修復）」と付記する。
 
 ---
 
@@ -33,19 +33,20 @@
 **`CHAT_ID` を聞いた際、ユーザーが「まだ無い」「これから作る」と答えた場合、silentに進めず、必ず `setup_prompt.md` §0-5（チャットが存在しない場合の作成ガイド）を実行する。** ユーザーへ質問（既存チャットの有無）→ 無ければ作成手順を案内 → カスタムボットのWebhook発行を案内 → CHAT_ID解決 → **その場でconfig.jsonへ登録**、まで一連で行い、聞いた値を登録せずに次の手順へ進まない。
 
 手順:
-1. **投稿管理テーブルを作成**（テーマ専用）:
+1. **テーママスターにレコードを作成する**（`THEME_MASTER_TABLE_ID` が未設定なら、先に `setup_prompt.md` §2 でテーママスター自体を作る）:
+   `lark-cli --profile <cfg.PROFILE> base +record-create --base-token <BASE_TOKEN> --table-id <THEME_MASTER_TABLE_ID> --json '{"fields":{"NAME":"<NAME>","THEME_KEY":"<THEME_KEY>","DESCRIPTION":"<READERとGOALから作った短い説明>","CHAT_NAME":"<CHAT_NAME>"}}' --as bot`
+   返った `record_id` を控える（これが `THEME_RECORD_ID`）。**参考元テーブルへ書き込む「テーマリンク」はこのrecord_idを使う。単一選択(select)の選択肢を追加する操作はもう行わない**（2026-07-27以降、系統/テーマはマスターテーブルへの正規化構成のため、参考元テーブル自体にオプション追加は不要）。
+2. **投稿管理テーブルを作成**（テーマ専用）:
    - `$TPL/schema.posts.json` を読み、`name` の `__THEME_NAME__` を `NAME` に、`link_table` の `__SOURCES_TABLE_ID__` を config の `TABLE_ID_SOURCES` に置換する。
    - `lark-cli --profile <cfg.PROFILE> base +table-create --base-token <BASE_TOKEN> --json '<置換後のJSON>' --as bot` で作成し、返った `table_id` を控える。
-2. **参考元テーブルの「テーマ」選択肢に NAME を追加**:
-   - `TABLE_ID_SOURCES` の「テーマ」フィールドを `+field-list` で取得し、現在の options に `{"name":"<NAME>"}` を足した配列で `+field-update` する（既存 option は消さない）。
 3. **テーマ用フォルダを scaffold**:
    - `mkdir -p $HOME_DIR/themes/<THEME_KEY>/image_refs`
    - `$TPL/backbone.template.md` を `$HOME_DIR/themes/<THEME_KEY>/backbone.md` にコピーし `__THEME_NAME__` を置換
    - `$TPL/image_taste.template.md` を `$HOME_DIR/themes/<THEME_KEY>/image_taste.md` にコピーし `__THEME_NAME__` を置換
    - `engine/design_framework_log.template.json` を `$HOME_DIR/themes/<THEME_KEY>/design_framework_log.json` にコピー
-4. **config.json に THEMES 要素を追記**（`TABLE_ID_POSTS` は手順1で得た値。`BACKBONE_FILE`=`themes/<KEY>/backbone.md`、`IMAGE_TASTE_FILE`=`themes/<KEY>/image_taste.md`、`LOGO_FILE`=空）。既存要素は変更しない。
+4. **config.json に THEMES 要素を追記**（`THEME_RECORD_ID` は手順1、`TABLE_ID_POSTS` は手順2で得た値。`BACKBONE_FILE`=`themes/<KEY>/backbone.md`、`IMAGE_TASTE_FILE`=`themes/<KEY>/image_taste.md`、`LOGO_FILE`=空）。既存要素は変更しない。
 5. **バックボーンと画像テイストの初期設定を促す**: 「続けてバックボーン（HP URL か直接入力）と画像テイスト（Instagram URL / 画像添付 / 説明）を設定しますか？」と尋ね、YesならC・Dへ進む。
-6. 結果を報告する（作成した TABLE_ID_POSTS、追加した「テーマ」選択肢、scaffold したファイルパス）。
+6. 結果を報告する（作成した THEME_RECORD_ID・TABLE_ID_POSTS、scaffold したファイルパス）。
 
 ---
 
@@ -69,6 +70,6 @@
 ---
 
 ## E. 編集（edit）/ 停止・再開（enable）/ 削除（remove）
-- edit: 指定テーマの `READER` `GOAL` `CTA_URL` `CTA_STYLE` `CHAT_ID` `CHAT_NAME` `WEBHOOK_URL` `NAME` を config で書き換える（バックボーン・画像テイストはC・Dで）。
-- enable/disable: `ENABLED` を true/false にする。false のテーマは取込・投稿作成の対象外になるが、テーブル・データ・watermark は保持され、再開できる。
-- remove: **物理削除はしない。** `ENABLED:false` にし、必要なら NAME 末尾に「（停止）」等の注記を付ける。テーブル削除が本当に必要な場合は、影響（発行済みリンク・既存レコード）を説明し、ユーザーが Lark 画面で手動削除する運用にする。
+- edit: 指定テーマの `READER` `GOAL` `CTA_URL` `CTA_STYLE` `CHAT_ID` `CHAT_NAME` `WEBHOOK_URL` `NAME` を config で書き換える（バックボーン・画像テイストはC・Dで）。**`NAME` を変える場合は、テーママスター（`THEME_RECORD_ID` が指すレコード）の `NAME` フィールドも同じ値に更新する（`+record-update` 等）。ここがマスターであり、参考元テーブルの「テーマ」表示はこの値をformulaで参照しているため、config側だけ変えると表示がズレる。**
+- enable/disable: `ENABLED` を true/false にする。false のテーマは取込・投稿作成の対象外になるが、テーブル・データ・watermark は保持され、再開できる（テーママスターのレコードもそのまま残す）。
+- remove: **物理削除はしない。** `ENABLED:false` にし、必要なら NAME 末尾に「（停止）」等の注記を付ける（テーママスター側も同様に注記してよい）。テーブル削除が本当に必要な場合は、影響（発行済みリンク・既存レコード・他テーブルからのリンク）を説明し、ユーザーが Lark 画面で手動削除する運用にする。

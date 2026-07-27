@@ -1,8 +1,10 @@
 {
   "_meta": {
-    "purpose": "素材案（参考元）テーブル定義。全テーマ共通の1テーブル。CHAT_ID で取り込み、『テーマ』フィールドで振り分ける。",
+    "purpose": "素材案（参考元）テーブル定義。全テーマ共通の1テーブル。CHAT_ID で取り込み、『テーマリンク』でテーママスターへ振り分ける。",
     "spec": "lark-cli base +table-create の --fields にそのまま渡せる field JSON。先頭要素が primary フィールドになる（タイトルを先頭に置く）。",
-    "note": "『テーマ』の options はセットアップ時に config.THEMES の NAME で置換する（setup が自動生成）。ここでは空の雛形にしてある。"
+    "note": "『テーマ』は単一選択(select)ではなく、テーママスター（schema.theme_master.json）へのlink+formula構成にする（複数テーブルに同じ選択肢を重複させない正規化。テーマの追加・改名はマスター側の1レコードを直すだけで済む）。",
+    "link_placeholder": "__THEME_MASTER_TABLE_ID__ は setup がテーママスター作成後に実 table_id へ置換する。",
+    "write_rule": "書込は必ず『テーマリンク』へ行う（CellValue [{\"id\": \"<テーママスターのrecord_id>\"}]）。『テーマ』はformula（例: FIRST([テーマリンク].[NAME])）の読取専用フィールドのため書込不可。formulaはフィルタ（==）・グループ化ともにtext型と同様に機能する（実機検証済みの実装例あり。lark-cli/Lark Baseのバージョンにより挙動が異なる場合は確認すること）。"
   },
   "name": "参考元",
   "fields": [
@@ -13,9 +15,10 @@
         { "name": "コメント", "hue": "Turquoise", "lightness": "Light" }
       ],
       "description": "URLを含む投稿=URL記事 / テキストのみ=コメント" },
-    { "name": "テーマ", "type": "select", "multiple": false,
-      "options": [],
-      "description": "この素材がどのテーマ向けか。取込元チャット(CHAT_ID)から自動判定。options はセットアップ時に config.THEMES の NAME で生成する" },
+    { "name": "テーマリンク", "type": "link", "link_table": "__THEME_MASTER_TABLE_ID__",
+      "description": "この素材がどのテーマ向けか。テーママスターへのリンク。取込元チャット(CHAT_ID)から自動判定してlink CellValueを書き込む" },
+    { "name": "テーマ", "type": "formula", "formula_expression": "FIRST([テーマリンク].[NAME])",
+      "description": "テーママスターのNAMEを表示するformula（読取・フィルタ・グループ化用）。書込不可" },
     { "name": "URL", "type": "text", "style": { "type": "url" }, "description": "参照記事URL。種別=コメントの場合は空" },
     { "name": "元テキスト", "type": "text", "description": "コメント本文またはURL投稿の添え書き。URL記事の本文は投稿生成に直接使わない（要約フィールド経由が原則）" },
     { "name": "要約", "type": "text", "description": "分析の整理結果。投稿本文生成の唯一の入力とする中核フィールド（元記事固有文言の混入防止ワンクッション）" },

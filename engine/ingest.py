@@ -6,8 +6,11 @@ SNS投稿パイプライン - チャット差分取込スクリプト (ingest.py
 概要:
     config.json の THEMES に定義された各Larkグループチャットの新着メッセージを
     差分取得し、参考元テーブル(Lark Base・全テーマ共通)にレコード化する。
-    取込元チャット(CHAT_ID)でテーマが一意に決まるため、レコードの「テーマ」フィールドへ
-    自動で書き込む。投稿(記事)側はテーマごとに別テーブルだが、素材案はこの1テーブルに集約する。
+    取込元チャット(CHAT_ID)でテーマが一意に決まるため、レコードの「テーマリンク」フィールド
+    （テーママスターへのlink）へ自動で書き込む。「テーマ」自体はテーママスターの値を表示する
+    formula（読取専用）であり、書込は必ず「テーマリンク」へ行う（テーマの正規化構成。
+    THEMES[].THEME_RECORD_ID をlink CellValueとして使う）。
+    投稿(記事)側はテーマごとに別テーブルだが、素材案はこの1テーブルに集約する。
     launchd/cron による定期ラン(1日1回程度)から呼ばれる前提。常時イベント監視はしない。
 
 ランタイムの場所:
@@ -51,11 +54,13 @@ CONFIG_PATH = HOME_DIR / "config.json"
 STATE_PATH = HOME_DIR / "state.json"
 LOG_DIR = HOME_DIR / "logs"
 
-# 参考元テーブルのフィールド名(schema.sources.json と同一名・変更禁止)
+# 参考元テーブルのフィールド名(schema.sources.json と同一名・変更禁止)。
+# 「テーマ」はテーママスターへのlink+formula構成のため、書込は「テーマリンク」へ行う
+# (「テーマ」自体はformulaの読取専用フィールドで書込不可)。
 FIELDS = [
     "タイトル",
     "種別",
-    "テーマ",
+    "テーマリンク",
     "URL",
     "元テキスト",
     "分析ステータス",
@@ -125,12 +130,16 @@ def load_themes(cfg):
         key = str(t.get("THEME_KEY", "") or "").strip()
         chat_id = str(t.get("CHAT_ID", "") or "").strip()
         name = str(t.get("NAME", "") or "").strip()
-        if not (key and chat_id and name):
-            log.warning("THEMES の要素をスキップ(THEME_KEY/CHAT_ID/NAME のいずれかが空): %s", t)
+        theme_record_id = str(t.get("THEME_RECORD_ID", "") or "").strip()
+        if not (key and chat_id and name and theme_record_id):
+            log.warning(
+                "THEMES の要素をスキップ(THEME_KEY/CHAT_ID/NAME/THEME_RECORD_ID のいずれかが空): %s", t,
+            )
             continue
         themes.append({
             "key": key,
             "name": name,
+            "theme_record_id": theme_record_id,
             "chat_id": chat_id,
             "display": str(t.get("CHAT_NAME", "") or chat_id),
         })
@@ -323,7 +332,10 @@ def extract_text(msg):
     return text.strip(), urls
 
 
-def build_record(msg, cfg, now_str, theme_name):
+def build_record(msg, cfg, now_str, theme_record_id):
+    """メッセージ1件をテーブル行(rows形式)へ変換する。対象外は None。
+    theme_record_id は取込元チャットから決まるテーママスターのrecord_id
+    (「テーマリンク」フィールドへのlink CellValueとして書き込む)。"""
     text, post_urls = extract_text(msg)
     if not text and not post_urls:
         return None
@@ -347,17 +359,17 @@ def build_record(msg, cfg, now_str, theme_name):
     return {
         "message_id": str(msg.get("message_id") or ""),
         "row": [
-            title,               # タイトル
-            kind,                # 種別
-            theme_name,          # テーマ
-            url,                 # URL
-            text,                # 元テキスト
-            STATUS_UNANALYZED,   # 分析ステータス
-            str(msg.get("message_id") or ""),  # 取込元メッセージID
-            sender_name,         # 投稿者名
-            msg_dt,              # メッセージ投稿日時
-            now_str,             # 取込日時
-            USAGE_UNUSED,        # 使用状況
+            title,                              # タイトル
+            kind,                               # 種別
+            [{"id": theme_record_id}],          # テーマリンク(link CellValue)
+            url,                                # URL
+            text,                               # 元テキスト
+            STATUS_UNANALYZED,                  # 分析ステータス
+            str(msg.get("message_id") or ""),   # 取込元メッセージID
+            sender_name,                        # 投稿者名
+            msg_dt,                             # メッセージ投稿日時
+            now_str,                            # 取込日時
+            USAGE_UNUSED,                       # 使用状況
         ],
     }
 
@@ -421,7 +433,7 @@ def write_chunk(cfg, chunk):
 # ---------------------------------------------------------------- テーマ単位取込
 
 def ingest_theme(cfg, theme, st, base_message_ids):
-    key, name = theme["key"], theme["name"]
+    key, name, theme_record_id = theme["key"], theme["name"], theme["theme_record_id"]
     log.info("--- [%s] %s / %s 取込開始 ---", key, name, theme["display"])
 
     if base_message_ids is not None and not st.get("processed_message_ids"):
@@ -452,7 +464,7 @@ def ingest_theme(cfg, theme, st, base_message_ids):
         if not is_target(msg):
             skipped_other += 1
             continue
-        rec = build_record(msg, cfg, now_str, name)
+        rec = build_record(msg, cfg, now_str, theme_record_id)
         if rec is None:
             skipped_other += 1
             continue

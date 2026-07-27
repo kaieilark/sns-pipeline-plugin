@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "purpose": "素材ライブラリ（任意機能）テーブル定義。画像生成時に参照する既定の素材（店舗オーナー写真・ロゴ等）を蓄積する。全テーマ共通の1テーブル（テーマリンクで対象テーマ、または『共通』を指定）。",
+    "spec": "lark-cli base +table-create の --fields にそのまま渡せる field JSON。先頭要素が primary フィールドになる。",
+    "note": "運用は人がBase画面でレコードを直接追加・編集する想定（ingest系スクリプトからの自動書込はしない）。使用フラグがONの素材だけが画像生成の参照候補になる。",
+    "link_placeholder": "__THEME_MASTER_TABLE_ID__ は setup がテーママスター作成後に実 table_id へ置換する。",
+    "usage": "compose_prompt.md の画像生成手順（5-0）が、対象テーマ（または『共通』）にリンクし、使用フラグ=trueの素材を取得し、画像を参照画像としてCodex等に渡し、備考の文言をそのままプロンプトに反映する。"
+  },
+  "name": "素材ライブラリ",
+  "fields": [
+    { "name": "タイトル", "type": "text", "description": "素材の名称・内容を示すタイトル（例: 店舗オーナー写真、会社ロゴ横組）" },
+    { "name": "画像", "type": "attachment", "description": "素材本体の画像ファイル" },
+    { "name": "備考", "type": "text", "description": "この素材が何であるか・画像生成時にどう扱うかの説明（例: 店舗オーナーです。服装の変更は許可します）。画像生成プロンプトに直接反映される" },
+    { "name": "テーマリンク", "type": "link", "link_table": "__THEME_MASTER_TABLE_ID__", "description": "対象テーマへのリンク。テーマを問わず使う素材（ロゴ等）は『共通』レコード（SHARED_THEME_RECORD_ID）を選ぶ" },
+    { "name": "テーマ", "type": "formula", "formula_expression": "FIRST([テーマリンク].[NAME])", "description": "テーママスターのNAMEを表示するformula（読取・フィルタ・グループ化用）" },
+    { "name": "使用フラグ", "type": "checkbox", "description": "ONの素材のみ画像生成時の参照候補になる（オン/オフ切替）" },
+    { "name": "登録日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "本レコードを登録した日時" }
+  ]
+}

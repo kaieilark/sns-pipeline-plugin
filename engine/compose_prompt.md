@@ -26,16 +26,17 @@
 
 ## 1. 設定読込と事前チェック
 
-1. `cat $HOME_DIR/config.json` を読み、`PROFILE` / `CHAT_PROFILE` / `CHAT_IDENTITY` / `BASE_TOKEN` / `TABLE_ID_SOURCES` / `THEMES`（各要素の `THEME_KEY` `NAME` `ENABLED` `CHAT_ID` `TABLE_ID_POSTS` `READER` `GOAL` `CTA_URL` `CTA_STYLE` `BACKBONE_FILE` `IMAGE_TASTE_FILE` `LOGO_FILE`）/ `BACKBONE_STOCK`（`ENABLED` `TABLE_ID`）を取得する。
-   - `BASE_TOKEN` / `TABLE_ID_SOURCES` が空、または有効な `THEMES`（`ENABLED != false` かつ `CHAT_ID` と `TABLE_ID_POSTS` が非空）が0件なら、手順7の形式でログに「設定未完了」と記録し、標準出力に `SKIP: config incomplete` と出して終了する（エラー扱いにしない）。
+1. `cat $HOME_DIR/config.json` を読み、`PROFILE` / `CHAT_PROFILE` / `CHAT_IDENTITY` / `BASE_TOKEN` / `TABLE_ID_SOURCES` / `THEME_MASTER_TABLE_ID` / `SHARED_THEME_RECORD_ID` / `MATERIALS_TABLE_ID` / `THEMES`（各要素の `THEME_KEY` `NAME` `THEME_RECORD_ID` `ENABLED` `CHAT_ID` `TABLE_ID_POSTS` `READER` `GOAL` `CTA_URL` `CTA_STYLE` `BACKBONE_FILE` `IMAGE_TASTE_FILE` `LOGO_FILE`）/ `BACKBONE_STOCK`（`ENABLED` `TABLE_ID`）を取得する。
+   - `BASE_TOKEN` / `TABLE_ID_SOURCES` が空、または有効な `THEMES`（`ENABLED != false` かつ `CHAT_ID` と `TABLE_ID_POSTS` と `THEME_RECORD_ID` が非空）が0件なら、手順7の形式でログに「設定未完了」と記録し、標準出力に `SKIP: config incomplete` と出して終了する（エラー扱いにしない）。
 2. `mkdir -p $HOME_DIR/images $HOME_DIR/logs $HOME_DIR/tmp` を実行する。
 3. フィールド構成を確認する（このランで初回のLark読取を兼ねる）:
    ```bash
    lark-cli --profile <cfg.PROFILE> base +field-list --base-token "$BASE_TOKEN" --table-id "$TABLE_ID_SOURCES" --as bot
    # 各テーマの TABLE_ID_POSTS についても field-list を実行
    # BACKBONE_STOCK.ENABLED=true の場合、BACKBONE_STOCK.TABLE_ID についても field-list を実行
+   # MATERIALS_TABLE_ID が空でない場合、そのテーブルについても field-list を実行
    ```
-   参考元に「タイトル / 種別 / テーマ / URL / 元テキスト / 要約 / 分析ステータス / 取込元メッセージID / 投稿者名 / メッセージ投稿日時 / 取込日時 / 使用状況 / エラー詳細」、各投稿管理テーブルに「タイトル / 本文（Instagram）/ 本文（Threads）/ 本文（X）/ 投稿済（Instagram/Threads/X）/ 画像 / 参照元 / 画像プロンプト / 作成日時 / 備考」があることを確認する。「投稿済（〜）」の3チェックボックスは人の確認・記録専用で、パイプラインからは書き込まない。欠落があればログに記録して終了する。
+   参考元に「タイトル / 種別 / テーマリンク / テーマ / URL / 元テキスト / 要約 / 分析ステータス / 取込元メッセージID / 投稿者名 / メッセージ投稿日時 / 取込日時 / 使用状況 / エラー詳細」、各投稿管理テーブルに「タイトル / 本文（Instagram）/ 本文（Threads）/ 本文（X）/ 投稿済（Instagram/Threads/X）/ 画像 / 参照元 / 画像プロンプト / 作成日時 / 備考」があることを確認する。**「テーマリンク」（link・書込対象）と「テーマ」（formula・読取専用。`FIRST([テーマリンク].[NAME])`）は別フィールドである（テーママスターへの正規化構成）。書込は必ずテーマリンクへ行い、テーマには書き込めない。** 「投稿済（〜）」の3チェックボックスは人の確認・記録専用で、パイプラインからは書き込まない。欠落があればログに記録して終了する。
 4. **`BACKBONE_STOCK.ENABLED` が true の場合、このテーブルを全件読む（絶対ルール3-2の実行手順。ここが唯一の読み取り箇所）**:
    ```bash
    lark-cli --profile <cfg.PROFILE> base +record-list \
@@ -145,6 +146,14 @@ lark-cli --profile <cfg.PROFILE> base +record-list \
 - `MODE: image` … `REFERENCE` の画像（`$HOME_DIR/themes/<key>/image_refs/…`）を**参照画像としてCodexに渡し**、絵柄・彩度・質感を合わせさせる。あわせてPALETTE等の記述も使う。
 - `MODE: instagram_url` … `REFERENCE` のURLの世界観に寄せる。自動ランでブラウザを開けない場合は、`IMAGE_TASTE_FILE` に書き写された PALETTE / MOOD / MOTIFS 等の記述を正とする（テイストは設定時に文章化済みである前提。未記入なら description 相当で進める）。
 - **ロゴ**: config の `LOGO_FILE` が設定されていれば、その実ファイルを参照画像としてCodexに渡し**忠実に描かせる**（文字で社名を書いて代用しない・テーマ配色に合わせて描き替えない）。空なら省略。
+- **素材ライブラリ（`MATERIALS_TABLE_ID`・任意機能）**: 空でなければ、生成の前に必ず参照する。
+  ```bash
+  lark-cli --profile <cfg.PROFILE> base +record-list \
+    --base-token "$BASE_TOKEN" --table-id "<MATERIALS_TABLE_ID>" \
+    --filter-json '{"logic":"and","conditions":[["使用フラグ","is",true]]}' \
+    --format json --as bot
+  ```
+  取得したレコードのうち、「テーマリンク」がそのレコードの `THEME_RECORD_ID`、または `SHARED_THEME_RECORD_ID`（共通）のいずれかに一致するものだけを候補にする（フィルタが使えない場合のフォールバック: 全件取得後に自分でこの2条件で絞る）。候補があれば、各レコードの「画像」を参照画像としてCodexに渡し、「備考」の文言をそのままプロンプトに含める（例: 備考が「店舗オーナーです。服装の変更は許可します」なら、その制約をCodexへの指示に明記する）。候補が0件、または `MATERIALS_TABLE_ID` が空の場合はこの手順をスキップする（無くても画像生成は成立する）。
 - アスペクト比は 4:5（1080x1350）を既定とする。
 - **情報密度の目安（1枚あたり）**: ブランドロゴ／今のトピックを示す短いラベル／見出し（キーワード強調）／説明文1〜2行／具体的な要素（アイコン・番号・比較等）を3〜4個／締めの一文／ブランド名フッター、という情報量を各ページで維持する。この要素をどう画面に配置するか（骨格・フレームワーク）は 5-0-2 のローテーション表から選ぶ。画像だけを見て「何の投稿か」「どのブランドか」がひと目で伝わる密度にする。文字・ロゴなしの曖昧な雰囲気画像や、情報がスカスカな表紙だけの画像は不可。複数枚の場合、1枚目に全体見出し、以降のページで論点ごとに掘り下げ、最終ページに橋渡し+誘導+フッターを置く構成を基本とする。
 - **枚数は1〜5枚の範囲で、内容の情報量に応じて決める。** 「迷ったら1枚」という固定の既定バイアスは置かない。参考元の要約に含まれる論点・具体例・対比構造・ステップ数を先に数え上げ、**1枚に収めると論点や具体例が欠落する、または窮屈に詰め込むことになる場合は、枚数を増やして各論点に十分な面積を与える。** 情報量の乏しいテーマを無理に複数枚へ水増しする（同じことを言い換えただけのページを足す）ことも禁止。基準は常に「1枚あたりの情報密度（前段の情報密度目安）を満たしたまま、すべての論点を窮屈にせず収められるか」。
@@ -190,7 +199,7 @@ lark-cli --profile <cfg.PROFILE> base +record-list \
    - 「画像生成モデルを必ず使用。HTML/CSS/SVG/Canvas/スクリーンショットでの文字合成・組版は禁止。文字もロゴもすべて画像生成モデルに描かせる。」
    - アスペクト比4:5。5-0で決めた PALETTE / MOOD / MOTIFS / PEOPLE / TYPOGRAPHY / FORBID。
    - 「構成」= 5-0-2で選んだ骨格の説明。
-   - 参照画像: `LOGO_FILE`（あれば）と、`MODE=image` の参照画像。渡した画像は忠実に再現させる。
+   - 参照画像: `LOGO_FILE`（あれば）、`MODE=image` の参照画像、5-0で取得した素材ライブラリの候補画像（あれば・各画像の「備考」の制約を添えて）。渡した画像は忠実に再現させる。
    - 「日本語テキストは一字一句正確に。生成後に自分で確認し、文字崩れ・誤字・レイアウト破綻・情報不足があれば最大3回まで再生成して直す。」
    - 複数枚の場合は、5-0の情報密度目安に沿ってページごとの役割（全体見出し／論点ごとの掘り下げ／橋渡し+誘導+フッター）を明示する。
    - テナントにデザイン規範ファイルがあればその絶対パスも含め、着手前に読ませる（装飾絵文字を使わない・見出しの孤立改行を避ける・コントラストを十分に取る等を静止画像にも適用させる。タップターゲット等のWeb固有指標は対象外と明記）。

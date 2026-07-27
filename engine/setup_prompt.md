@@ -73,16 +73,26 @@ cp $TPL/config.example.json $HOME_DIR/config.json   # 既存があれば上書�
 - `config.json` の `PROFILE`（Base書込プロファイル）・`CHAT_PROFILE`（チャット読取。空=デフォルト）・`BASE_TOKEN` を、このテナントの値で埋める。
 - `BASE_TOKEN` は、wikiノードURLしか無い場合 `lark-cli base +url-resolve`（または `docs`/`wiki` 系の解決コマンド）で token を得る。
 
-## 2. 参考元テーブル（全テーマ共通）の作成
-- `lark-cli base --help` で `+table-create` の綴りを確認する。
-- `$TPL/schema.sources.json` の `fields` を渡してテーブルを作成する:
-  `lark-cli --profile <PROFILE> base +table-create --base-token <BASE_TOKEN> --json '<schema.sources.json 相当>' --as bot`
-  - 「テーマ」フィールドの options は空でよい（テーマ追加時に NAME を足していく）。
-- 返った `table_id` を config の `TABLE_ID_SOURCES` に書く。
+## 2. テーママスター・参考元テーブルの作成
+
+> **順序が重要**: 参考元テーブルの「テーマリンク」フィールドはテーママスターへリンクするため、
+> 先にテーママスターを作り、その `table_id` を使って参考元テーブルを作る。
+
+1. **テーママスターテーブルを作成する**:
+   `lark-cli base --help` で `+table-create` の綴りを確認してから、`$TPL/schema.theme_master.json` の `fields` を渡して作成する:
+   `lark-cli --profile <PROFILE> base +table-create --base-token <BASE_TOKEN> --json '<schema.theme_master.json 相当>' --as bot`
+   返った `table_id` を config の `THEME_MASTER_TABLE_ID` に書く。
+2. **「共通」レコードを1件作成する**（テーマを問わず使う素材ライブラリのレコード等が参照する固定レコード）:
+   `lark-cli --profile <PROFILE> base +record-create --base-token <BASE_TOKEN> --table-id <THEME_MASTER_TABLE_ID> --json '{"fields":{"NAME":"共通","THEME_KEY":"","DESCRIPTION":"テーマを問わず使う汎用データ向け（例: ロゴ等の素材）"}}' --as bot`
+   返った `record_id` を config の `SHARED_THEME_RECORD_ID` に書く。
+3. **参考元テーブルを作成する**: `$TPL/schema.sources.json` を読み、`テーマリンク` フィールドの `link_table` の `__THEME_MASTER_TABLE_ID__` を手順1で得た `THEME_MASTER_TABLE_ID` に置換してから作成する:
+   `lark-cli --profile <PROFILE> base +table-create --base-token <BASE_TOKEN> --json '<置換後のJSON>' --as bot`
+   返った `table_id` を config の `TABLE_ID_SOURCES` に書く。
+4. **「テーマ」フィールドが実際に formula として機能するか確認する**: `+field-list` でフィールド一覧を取得し、「テーマリンク」（link）と「テーマ」（formula）の両方が存在することを確認する。可能であれば1件テストレコードを作成し（「テーマリンク」に手順2の共通レコードのrecord_idを設定）、「テーマ」フィールドに `共通` が正しく表示されるか、`+record-list --filter-json` で「テーマ」を条件にした絞り込みが効くかを確認してからテストレコードを削除する。formulaがフィルタ・グループ化で正しく機能しない版のLark Base/lark-cliに当たった場合は、`テーマ`フィールドの式（`FIRST([テーマリンク].[NAME])`）を見直すか、運用側に制約（フィルタは「テーマリンク」の record_id で行う等）を明記する。
 
 ## 3. テーマの作成（1つ以上）
 - **テーマ管理指示書 `theme_prompt.md` の B（追加）** を、必要なテーマ数だけ実行する。
-  各テーマで投稿管理テーブルが作られ、`TABLE_ID_POSTS`・「テーマ」選択肢・テーマ用フォルダ（backbone/image_taste/rotation log）が用意される。
+  各テーマで、テーママスターへのレコード作成（`THEME_RECORD_ID`）・投稿管理テーブル作成（`TABLE_ID_POSTS`）・テーマ用フォルダ（backbone/image_taste/rotation log）が用意される。
   **`CHAT_ID` が未確定なら、着手前に手順0-5（チャットが存在しない場合の作成ガイド）を実行する。**
 - 続けて各テーマの **バックボーン（C）** と **画像テイスト（D）** を設定する。
 
@@ -101,6 +111,16 @@ cp $TPL/config.example.json $HOME_DIR/config.json   # 既存があれば上書�
 5. 以後は `run_pipeline.sh`（Step 1b）または `sns-run` の一部として自動で取り込まれる。中身は人がチャットに随時書き込むだけでよく、レコードを直接編集する運用ではない。
 
 > **この設計原則（固定フィールドを内容依存にしない・関連者情報はuser型で持つ）は、バックボーンストック以外の新規テーブルを作る際にも適用する。** 新しいテーブルを設計するたびに、固定フィールドの型・内容が本当に最善かを一度立ち止まって検討してから `+table-create` を実行すること。
+
+## 3-3. 素材ライブラリの設定（任意機能）
+
+画像生成のたびに使い回したい既定の参照画像（店舗オーナー写真・ロゴ等）を、Base側で管理したい場合に設定する。**必須ではない**（設定しなくても `THEMES[].LOGO_FILE` と `IMAGE_TASTE_FILE` の `MODE=image` 参照画像だけで画像生成は成立する）。
+
+導入する場合:
+1. テーブルを作成する: `$TPL/schema.materials.json` を読み、「テーマリンク」の `link_table` の `__THEME_MASTER_TABLE_ID__` を `THEME_MASTER_TABLE_ID`（§2で作成済み）に置換してから作成する:
+   `lark-cli --profile <PROFILE> base +table-create --base-token <BASE_TOKEN> --json '<置換後のJSON>' --as bot` を実行。返った `table_id` を config の `MATERIALS_TABLE_ID` に書く。
+2. **運用は人がBase画面で直接レコードを追加する**（自動取込スクリプトは無い）。1レコード=1素材。「タイトル」（例: 店舗オーナー写真）・「画像」（添付）・「備考」（この素材が何で、画像生成時にどう扱ってよいか。例:「店舗オーナーです。服装の変更は許可します」）・「テーマリンク」（対象テーマ、または特定テーマに紐付かない場合は§2の共通レコード）・「使用フラグ」（ONの素材だけが画像生成の参照候補になる）を人に入力してもらう。
+3. `config.json` の `MATERIALS_TABLE_ID` が空でなければ、`compose_prompt.md` の画像生成手順が自動でこのテーブルを参照する（そのテーマ、または共通にリンクし使用フラグ=trueの素材を取得し、参照画像として渡し、備考の文言をプロンプトに反映する）。
 
 ## 4. 素材投入の導線（Lark クイック送信 拡張機能）
 「参考にしたい記事URLやコメントを、Larkのテーマ別チャットに集める」導線を用意する。手軽にするための Chrome 拡張機能を同梱している。
@@ -123,7 +143,9 @@ cp $TPL/config.example.json $HOME_DIR/config.json   # 既存があれば上書�
 - 生成物はBaseの下書き。SNSへの自動投稿はしない（人が確認して投稿する）。
 
 ## テーブル構成の確認・再作成（settings の 7 から呼ばれる）
-- `TABLE_ID_SOURCES` と各テーマの `TABLE_ID_POSTS` について `+field-list` を実行し、
-  スキーマ（schema.sources.json / schema.posts.json）と突き合わせて過不足を報告する。
+- `THEME_MASTER_TABLE_ID` / `TABLE_ID_SOURCES` と各テーマの `TABLE_ID_POSTS` について `+field-list` を実行し、
+  スキーマ（schema.theme_master.json / schema.sources.json / schema.posts.json）と突き合わせて過不足を報告する。
 - `BACKBONE_STOCK.ENABLED` が true なら `BACKBONE_STOCK.TABLE_ID` についても同様に `schema.backbone_stock.json` と突き合わせる。
+- `MATERIALS_TABLE_ID` が空でなければ同様に `schema.materials.json` と突き合わせる。
+- テーママスターに「共通」レコード（`SHARED_THEME_RECORD_ID` の指す record）が実在するか確認する。
 - **不足フィールドの追加のみ**行い、既存フィールドの改名・削除はしない。テーブルが未作成なら作成する。

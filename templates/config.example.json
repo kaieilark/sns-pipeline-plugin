@@ -5,10 +5,14 @@
     "PROFILE = Base書込用の lark-cli プロファイル名（--as bot 運用）。テナント自身の Lark Custom App の資格情報で作成する。",
     "CHAT_PROFILE = チャット読取用の lark-cli プロファイル名（空=デフォルトプロファイル / --as user）。読取はユーザー認証で行う。",
     "TABLE_ID_SOURCES = 素材案（参考元）テーブル。全テーマ共通の1テーブルで、CHAT_ID でテーマへ振り分ける。",
+    "THEME_MASTER_TABLE_ID = テーママスターテーブル（正規化の要）。各テーマ（+『共通』）を1レコードずつ持つ。TABLE_ID_SOURCES の『テーマリンク』（と、任意機能の素材ライブラリの『テーマリンク』）はこのテーブルへリンクする。『テーマ』（select）を各テーブルに重複させず、マスター1箇所を直せば全体に反映される構成にするための土台。",
+    "SHARED_THEME_RECORD_ID = テーママスター内の『共通』レコード（THEME_KEY空）のrecord_id。ロゴ等、特定テーマに紐付かない素材ライブラリのレコードはここへリンクする。",
+    "THEMES[].THEME_RECORD_ID = そのテーマに対応するテーママスターのrecord_id。テーマ追加時にマスターへレコードを作成して自動で埋まる。参考元テーブルへの書込（テーマリンク）に使う。",
     "THEMES[].TABLE_ID_POSTS = テーマごとに分けた投稿管理テーブル。テーマA用とテーマB用で別テーブルにする（設計要件）。",
     "THEMES[].BACKBONE_FILE / IMAGE_TASTE_FILE = テーマ固有の背景思想・画像テイスト定義ファイル（SNS_PIPELINE_HOME からの相対パス）。後から編集可能。",
     "THEMES[].LOGO_FILE = 画像に必ず入れるロゴ（任意）。空なら画像にロゴを入れない。",
-    "テーマは THEMES に要素を足すだけで増やせる（sns-theme / sns-settings スキルが面倒を見る）。",
+    "テーマは THEMES に要素を足すだけで増やせる（sns-theme / sns-settings スキルが面倒を見る）。テーマ追加時はテーママスターにも対応レコードを作る。",
+    "MATERIALS_TABLE_ID = 素材ライブラリ（任意機能）。画像生成時に参照する既定素材（店舗オーナー写真・ロゴ等）を蓄積する。使用フラグ(checkbox)がONの素材だけが画像生成時の参照候補になる。備考欄の説明（例: 店舗オーナーです。服装の変更は許可します）が画像生成プロンプトに直接反映される。空なら未使用（従来どおり LOGO_FILE と IMAGE_TASTE_FILE だけで画像生成が成立する）。",
     "BACKBONE_STOCK = 継続蓄積バックボーン（THEMES[].BACKBONE_FILEとは別物・混同注意）。特定のチャットに随時書き溜められる、事業への思い・方針・エピソードをLark Baseへ蓄積し続ける独立機能。",
     "  THEMES[].BACKBONE_FILE が『いつでも書き換えられる背景設定シート』なのに対し、BACKBONE_STOCK は『時系列で積み上がっていく生のメモ・語り』。全テーマ共通のレンズとして本文作成時に全件参照する（素材の代わりにはしない）。",
     "  ENABLED=false またはこのブロック自体が空でも動作する（無くても本文作成は BACKBONE_FILE と要約だけで成立する）。",
@@ -24,10 +28,13 @@
   "CHAT_IDENTITY": "user",
   "BASE_TOKEN": "",
   "TABLE_ID_SOURCES": "",
+  "THEME_MASTER_TABLE_ID": "",
+  "SHARED_THEME_RECORD_ID": "",
   "THEMES": [
     {
       "THEME_KEY": "brand",
       "NAME": "会社ブランディング",
+      "THEME_RECORD_ID": "",
       "ENABLED": true,
       "CHAT_ID": "",
       "CHAT_NAME": "ブランディング用-SNS案",
@@ -44,6 +51,7 @@
     {
       "THEME_KEY": "recruit",
       "NAME": "採用・募集",
+      "THEME_RECORD_ID": "",
       "ENABLED": true,
       "CHAT_ID": "",
       "CHAT_NAME": "募集用-SNS案",
@@ -65,6 +73,7 @@
     "WEBHOOK_URL": "",
     "TABLE_ID": ""
   },
+  "MATERIALS_TABLE_ID": "",
   "IMAGE_BACKEND": "codex_cli",
   "IMAGE_BACKEND_CONFIG": {
     "OPENAI_MODEL": "gpt-image-1",

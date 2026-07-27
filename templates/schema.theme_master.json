@@ -1,0 +1,16 @@
+{
+  "_meta": {
+    "purpose": "テーママスターテーブル定義。各テーマ（会社ブランディング用・募集用…）を1レコードとして持つマスター。参考元（素材案）テーブルはこのマスターへ『テーマリンク』でリンクし、『テーマ』はそこからのformulaで表示する。",
+    "spec": "lark-cli base +table-create の --fields にそのまま渡せる field JSON。先頭要素が primary フィールドになる。",
+    "why_normalized": "『テーマ』を各テーブルに同じ選択肢を持つ単一選択(select)フィールドとして重複させると、テーマの追加・改名のたびに複数箇所（参考元テーブルのoptions・素材ライブラリのoptions・ドキュメント等）を同期する必要があり、どこか一箇所だけ直して他が古いままという不具合の温床になる。マスターテーブルを1つ持ち、他のテーブルはそこへリンク+formulaで参照する構成にすることで、テーマの追加・改名はマスター側の1レコードを直すだけで済む。",
+    "required_shared_record": "『共通』（テーマ横断で使う汎用データ向け。例: ロゴ等どのテーマでも使う素材）を表す固定レコードを1件、セットアップ時に必ず作成する。THEME_KEY は空でよい。このレコードの record_id を config.json の SHARED_THEME_RECORD_ID に保存する。",
+    "linked_from": "templates/schema.sources.json の『テーマリンク』フィールド（link_table にこのテーブルの table_id を指定）。templates/schema.materials.json の『テーマリンク』も同様（任意機能・素材ライブラリ）。"
+  },
+  "name": "テーママスター",
+  "fields": [
+    { "name": "NAME", "type": "text", "description": "テーマの表示名（例: 会社ブランディング、募集、共通）。固定（プライマリ）フィールド。安定した参照名のため内容依存フィールドの問題は当てはまらない（頻繁に書き換わるログ内容とは異なる）" },
+    { "name": "THEME_KEY", "type": "text", "description": "config.json の THEMES[].THEME_KEY と一致する英小文字キー。『共通』レコードは空でよい" },
+    { "name": "DESCRIPTION", "type": "text", "description": "このテーマの読者・ゴールの短い説明" },
+    { "name": "CHAT_NAME", "type": "text", "description": "取込元チャットの表示名（任意・参考情報）" }
+  ]
+}
