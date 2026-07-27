@@ -2,13 +2,16 @@
   "_meta": {
     "purpose": "バックボーンストック（継続蓄積）テーブル定義。特定のチャットに随時書き溜められる、事業への思い・方針・エピソードを蓄積する。全テーマ共通の1テーブル（テーマで分けない）。",
     "spec": "lark-cli base +table-create の --fields にそのまま渡せる field JSON。先頭要素が primary フィールドになる。",
-    "note": "themes/<key>/backbone.md（静的・随時編集）とは別物。こちらは時系列ログで、engine/ingest_backbone_stock.py が自動で追記していく。人が直接レコードを編集する運用ではない。"
+    "note": "themes/<key>/backbone.md（静的・随時編集）とは別物。こちらは時系列ログで、engine/ingest_backbone_stock.py が自動で追記していく。人が直接レコードを編集する運用ではない。",
+    "design_principle": "固定（プライマリ）フィールドは内容依存のフィールドにしない（Lark Base仕様上あとから差し替え不可のため）。本テーブルは『ID』（auto_number・自動採番）を固定にする。『投稿者名』はLark標準のuser型フィールドにする（open_idベースで名前・アイコンをLarkが自動解決し、SENDER_NAME_MAPのような手動マップが不要になる）。この原則は、他の新規テーブルを作る際にも適用すること（既存データがあるテーブルの応急処置＝プレフィックス付与とは違い、未使用の新規テーブルは最初から正しい設計を選べる）。",
+    "field_type_caveat": "auto_number / user の正確な type 文字列・書込CellValue形状は、lark-cli/lark-base スキルの field-create 仕様（版により綴りが変わることがある）を必ず確認してから作成・実装する。"
   },
   "name": "バックボーンストック",
   "fields": [
-    { "name": "タイトル", "type": "text", "description": "本文先頭の要旨（自動生成・40字以内）" },
+    { "name": "ID", "type": "auto_number", "description": "固定（プライマリ）フィールド。自動採番。書込不要（+record-batch-create の入力に含めない）" },
+    { "name": "タイトル", "type": "text", "description": "本文冒頭の要旨プレビュー（自動生成・40字以内）。固定フィールドではない" },
     { "name": "元テキスト", "type": "text", "description": "チャット投稿の原文" },
-    { "name": "投稿者名", "type": "text", "description": "チャットでの投稿者" },
+    { "name": "投稿者名", "type": "user", "multiple": false, "description": "実在ユーザー投稿のときだけ設定する（sender.id_type==\"open_id\" の場合に CellValue [{\"id\": open_id}]）。名前・アイコンはLarkが自動解決する。bot/アプリ投稿（app_id等）はuser型に書けないため空のままにする" },
     { "name": "メッセージ投稿日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "元メッセージがチャットに投稿された日時" },
     { "name": "取込日時", "type": "datetime", "style": { "format": "yyyy-MM-dd HH:mm" }, "description": "パイプラインが本レコードを作成した日時" },
     { "name": "取込元メッセージID", "type": "text", "description": "Larkメッセージの message_id（om_...）。冪等性キー" }

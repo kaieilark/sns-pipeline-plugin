@@ -29,6 +29,21 @@ cd ~/sns-pipeline-plugin
 - `BASE_TOKEN`: 対象 Base のトークン
 - `TABLE_ID_SOURCES`: 後述の参考元テーブル作成後に自動で入る（手動でもよい）
 - `THEMES`: テーマ定義（後述。`/sns-theme` で追加すると自動で書かれる）
+- `IMAGE_BACKEND` / `IMAGE_BACKEND_CONFIG`: 画像生成の実行方法（次項）
+
+### 2-1. 画像生成バックエンドを選ぶ（Claude Code実行時は必須）
+
+Claude Code自身は画像生成モデルを持たないため、`/sns-setup` の中で必ず選ぶことになる（`engine/setup_prompt.md` §0-6）:
+
+| 選択肢 | `IMAGE_BACKEND` の値 | 必要なもの |
+|---|---|---|
+| Codex CLIのサブスクリプションを使う（推奨） | `codex_cli` | 別途 `codex` コマンドが使える環境 |
+| OpenAI API等の従量課金APIを使う | `openai_api` | APIキー（環境変数に設定） |
+| 自作スクリプトで他のAPI/ツールを使う | `custom_script` | 契約を満たすスクリプト（§0-6参照） |
+
+**Codex自身にこのプラグインを導入した場合は、確認なしで自動的に `codex_native`**（Codex自身のimage_gen機能をその場で直接使う）に設定される。
+
+後から `/sns-settings` →「画像生成バックエンドを変更する」でいつでも切り替えられる。
 
 ## 3. テーブルを作る
 

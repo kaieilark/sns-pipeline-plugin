@@ -31,6 +31,40 @@
 5. **得られた CHAT_ID と WEBHOOK_URL を、その場で config.json に書き込む**（テーマ追加なら該当テーマの `CHAT_ID`/`WEBHOOK_URL`、バックボーンストックなら `BACKBONE_STOCK.CHAT_ID`/`WEBHOOK_URL`）。**聞いた値を確認だけして登録し忘れることを禁止する。**
 6. 登録後、実際に読めるか1回テストする: `lark-cli --profile <cfg.CHAT_PROFILE or空> im +chat-messages-list --chat-id <CHAT_ID> --as <cfg.CHAT_IDENTITY> --page-size 1 --format json`。エラーなら手順2（メンバー招待漏れ）を再確認する。
 
+## 0-6. 画像生成バックエンドの選択（`IMAGE_BACKEND`・省略禁止）
+
+> 投稿画像（手順5・`compose_prompt.md` §5）は必ず画像生成モデルで作る。しかし**実行中のエージェント自身が画像生成モデルを持っているとは限らない**（Claude Codeは持たない）。どう生成するかを `config.json` の `IMAGE_BACKEND` に明示的に設定してから先へ進む。
+
+### 選べる4つのバックエンド
+
+| 値 | 説明 | 必要なもの |
+|---|---|---|
+| `codex_native` | **実行中のエージェント自身がCodex** の場合に使う。Codex自身の image_gen 機能をその場で直接使う（サブプロセスを起動しない）。 | 追加設定不要（Codexのサブスクリプションで完結） |
+| `codex_cli` | 実行中のエージェントは別（例: Claude Code）だが、**別途インストール済みの `codex` CLI** をサブプロセスとして呼び出す（`codex exec ...`）。既存の compose_prompt.md §5-1 はこの前提で書かれている。 | `codex` CLI が使える環境・Codexのサブスクリプション |
+| `openai_api` | **OpenAI Images API を従量課金で直接**呼び出す。Codex CLIを使わない。 | `IMAGE_BACKEND_CONFIG.OPENAI_API_KEY_ENV` に指定した環境変数にAPIキーを設定 |
+| `custom_script` | その他の画像生成API/ツールをラップした**自作スクリプト**を呼び出す。 | `IMAGE_BACKEND_CONFIG.CUSTOM_SCRIPT_PATH`（下記の契約を満たすスクリプト） |
+
+### 選び方（このセットアップを実行しているエージェント自身が判断する。ここが本手順の核）
+
+- **今この手順を実行しているのが Codex 自身の場合** → **ユーザーに確認せず、自動的に `codex_native` を設定する。** Codexは自分自身の画像生成能力とサブスクリプションをそのまま使えるため、選択の必要がない。
+- **今この手順を実行しているのが Claude Code（またはその他、画像生成モデルを持たないエージェント）の場合** → **必ずユーザーに次の3択を尋ねる**（黙って `codex_cli` を既定にしない）:
+  1. 「Codex CLIのサブスクリプションを使う」（`codex_cli`・**推奨・既定の案内として提示してよい**。別途 `codex` コマンドが必要）
+  2. 「OpenAI API等の従量課金APIを使う」（`openai_api`。APIキーの用意が必要）
+  3. 「その他のAPI/ツールを自分で用意する」（`custom_script`。契約は下記）
+  選ばれた値を `config.json` の `IMAGE_BACKEND` に書き込む。`openai_api` ならAPIキーの環境変数名を確認（既定 `OPENAI_API_KEY`）し `IMAGE_BACKEND_CONFIG.OPENAI_API_KEY_ENV` に設定、`custom_script` ならスクリプトの絶対パスを `IMAGE_BACKEND_CONFIG.CUSTOM_SCRIPT_PATH` に設定する。
+
+### `custom_script` の契約（自作スクリプトを使う場合）
+
+呼び出し規約（compose_prompt.md 側がこの規約で呼ぶ）:
+```bash
+<CUSTOM_SCRIPT_PATH> --prompt-file <生成指示テキストのファイルパス> --aspect-ratio 4:5 --out <出力先PNGの絶対パス>
+```
+- スクリプトは指定された `--out` パスに画像ファイル（PNG）を生成して正常終了（exit 0）すること。失敗時は非0で終了する。
+- 複数枚必要な場合は、compose_prompt.md 側がページごとに1回ずつこのスクリプトを呼ぶ（スクリプト自身が複数ファイルを一括生成する必要はない）。
+
+### 後から変更する場合
+`/sns-settings` →「画像生成バックエンドを変更する」で、いつでも選び直せる。
+
 ## 1. ランタイムの用意
 ```bash
 mkdir -p $HOME_DIR/{themes,logs,images,tmp}
@@ -60,9 +94,13 @@ cp $TPL/config.example.json $HOME_DIR/config.json   # 既存があれば上書�
 1. `config.json` の `BACKBONE_STOCK.CHAT_ID` が未確定なら、**手順0-5（チャットが存在しない場合の作成ガイド）を実行する**（チャット名の例:「バックボーンストック」「思考ログ」等）。
 2. テーブルを作成する: `$TPL/schema.backbone_stock.json` の `fields` を渡し、
    `lark-cli --profile <PROFILE> base +table-create --base-token <BASE_TOKEN> --json '<schema.backbone_stock.json 相当>' --as bot` を実行。返った `table_id` を `BACKBONE_STOCK.TABLE_ID` に書く。
+   - **固定（プライマリ）フィールドは「ID」（auto_number）にする。「タイトル」等の内容依存フィールドを固定にしない。** 理由: Lark Base は固定フィールドをあとから変更できない。テーブルが未使用（0件）の新規作成時は、この原則を最初から満たす設計にできる（既にデータがある既存テーブルへの応急処置＝内容にプレフィックスを足す等とは状況が違う。新規テーブルでは応急処置に頼らず正しい設計を選ぶ）。
+   - `auto_number` / `user`（「投稿者名」）の正確な type 文字列は、実行前に `lark-cli base --help` 系のfield-create仕様（版により綴りが変わることがある）で確認してから作成する。
 3. `BACKBONE_STOCK.ENABLED` を `true` にする。
-4. `engine/ingest_backbone_stock.py` を1回手動実行し、正常終了すること（0件でもよい）を確認する。
+4. `engine/ingest_backbone_stock.py` を1回手動実行し、正常終了すること（0件でもよい）を確認する。実データがある場合は、Lark Base画面で「投稿者名」が実在ユーザーの名前・アイコンとして正しく表示されているか目視確認する。
 5. 以後は `run_pipeline.sh`（Step 1b）または `sns-run` の一部として自動で取り込まれる。中身は人がチャットに随時書き込むだけでよく、レコードを直接編集する運用ではない。
+
+> **この設計原則（固定フィールドを内容依存にしない・関連者情報はuser型で持つ）は、バックボーンストック以外の新規テーブルを作る際にも適用する。** 新しいテーブルを設計するたびに、固定フィールドの型・内容が本当に最善かを一度立ち止まって検討してから `+table-create` を実行すること。
 
 ## 4. 素材投入の導線（Lark クイック送信 拡張機能）
 「参考にしたい記事URLやコメントを、Larkのテーマ別チャットに集める」導線を用意する。手軽にするための Chrome 拡張機能を同梱している。

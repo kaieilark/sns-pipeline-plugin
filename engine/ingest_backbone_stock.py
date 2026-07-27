@@ -31,6 +31,21 @@ SNS投稿パイプライン - バックボーンストック取込スクリプ�
       で ingest.py の themes.* とは独立に管理する。
     - message_id による重複判定で二重取込を防止。
 
+テーブル設計（重要な設計原則。新規テーブルを作る際は必ず踏襲する）:
+    - 固定（プライマリ）フィールドは「ID」（auto_number・自動採番）。テキストの要約を固定フィールドに
+      しない（Lark Base仕様上あとから差し替え不可のため、内容依存のフィールドは固定にしない）。
+    - 「投稿者名」は Lark Base の user 型フィールド。実在ユーザー（sender.id_type=="open_id"）の
+      ときだけ CellValue [{"id": open_id}] を書く。アプリ/bot投稿は空のままにする（user型に
+      app_idは書けない）。user型なのでグループ化・フィルタリングがLark標準機能でそのまま使える
+      （SENDER_NAME_MAPのような手動マップは不要）。
+    - +record-batch-create の入力は {"create_records":[<フィールド名:値のマップ>, ...]} 形式
+      （旧{"fields":[...],"rows":[[...]]}形式は本スクリプトでは使わない）。
+    - **この設計は「テーブルが未使用（0件）のときは、応急処置ではなくゼロベースで正しい設計を
+      選べる」という教訓に基づく。** 既に運用中でデータがあるテーブルの固定フィールド変更は
+      不可能だが、新規・未使用のテーブルにはその制約が当てはまらない。新しいテーブルを設計する
+      際は、固定フィールドの型・内容が本当に最善か（auto_numberが妥当か、関連者情報はuser型で
+      持つべきでないか）を必ず検討してから +table-create を実行する。
+
 終了コード:
     0: 正常終了(新着なしを含む)
     1: 実行エラー
@@ -53,16 +68,8 @@ CONFIG_PATH = HOME_DIR / "config.json"
 STATE_PATH = HOME_DIR / "state.json"
 LOG_DIR = HOME_DIR / "logs"
 
-# バックボーンストックテーブルのフィールド名(schema.backbone_stock.json と同一名・変更禁止)
-FIELDS = [
-    "タイトル",
-    "元テキスト",
-    "投稿者名",
-    "メッセージ投稿日時",
-    "取込日時",
-    "取込元メッセージID",
-]
-
+# バックボーンストックテーブルのフィールド名(schema.backbone_stock.json と同一名・変更禁止)。
+# 「ID」は auto_number(自動採番)のプライマリフィールドのため書込フィールドには含めない。
 TITLE_LEN = 40
 BATCH_LIMIT = 200
 MAX_PAGES = 200
@@ -244,12 +251,18 @@ def build_record(msg, cfg, now_str):
     text = extract_text(msg)
     if not text:
         return None
-    title = re.sub(r"\s+", " ", text).strip()[:TITLE_LEN] or "(無題)"
 
+    # 「投稿者名」は Lark Base の user 型フィールド。実在ユーザー(open_id)のときだけ
+    # CellValue [{"id": open_id}] を設定する。アプリ/bot投稿(id_type=app_id等)は
+    # user型に書けないため空のままにする(フィールド自体をfieldsから省略する)。
     sender = msg.get("sender") or {}
     sender_id = str(sender.get("id") or "")
-    name_map = cfg.get("SENDER_NAME_MAP") or {}
-    sender_name = name_map.get(sender_id) or sender_id or "(不明)"
+    sender_id_type = str(sender.get("id_type") or "")
+    poster_cell = [{"id": sender_id}] if sender_id_type == "open_id" and sender_id else None
+
+    # 「タイトル」は固定(プライマリ)フィールドではない(固定フィールドはID=auto_number)ため、
+    # 発言者プレフィックス等は不要。純粋な冒頭プレビューでよい。
+    title = re.sub(r"\s+", " ", text).strip()[:TITLE_LEN] or "(無題)"
 
     ct_ms = create_time_ms(msg)
     msg_dt = (
@@ -257,16 +270,19 @@ def build_record(msg, cfg, now_str):
         if ct_ms > 0 else None
     )
 
+    fields = {
+        "タイトル": title,
+        "元テキスト": text,
+        "メッセージ投稿日時": msg_dt,
+        "取込日時": now_str,
+        "取込元メッセージID": str(msg.get("message_id") or ""),
+    }
+    if poster_cell is not None:
+        fields["投稿者名"] = poster_cell
+
     return {
         "message_id": str(msg.get("message_id") or ""),
-        "row": [
-            title,              # タイトル
-            text,               # 元テキスト
-            sender_name,        # 投稿者名
-            msg_dt,             # メッセージ投稿日時
-            now_str,            # 取込日時
-            str(msg.get("message_id") or ""),  # 取込元メッセージID
-        ],
+        "fields": fields,
     }
 
 
@@ -310,7 +326,9 @@ def fetch_messages(cfg, bb, st):
 
 
 def write_chunk(cfg, bb, chunk):
-    body = {"fields": FIELDS, "rows": [r["row"] for r in chunk]}
+    # +record-batch-create の正式な入力形は {"create_records": [<field_map>, ...]}
+    # (ID列はauto_numberのためサーバー自動採番。書込フィールドに含めない)。
+    body = {"create_records": [r["fields"] for r in chunk]}
     args = [
         "base", "+record-batch-create",
         "--base-token", str(cfg["BASE_TOKEN"]),

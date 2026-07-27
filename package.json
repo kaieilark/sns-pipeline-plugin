@@ -1,6 +1,6 @@
 {
   "name": "@kaieilark/sns-pipeline",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "テーマ別SNS投稿パイプライン（Lark素材→要約→Instagram/Threads/X本文→参考画像→Baseへ蓄積）。Claude Code / Codex 両対応の配布用プラグイン。",
   "bin": {
     "sns-pipeline": "bin/cli.js"

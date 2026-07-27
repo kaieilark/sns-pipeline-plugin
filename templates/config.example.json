@@ -11,7 +11,13 @@
     "テーマは THEMES に要素を足すだけで増やせる（sns-theme / sns-settings スキルが面倒を見る）。",
     "BACKBONE_STOCK = 継続蓄積バックボーン（THEMES[].BACKBONE_FILEとは別物・混同注意）。特定のチャットに随時書き溜められる、事業への思い・方針・エピソードをLark Baseへ蓄積し続ける独立機能。",
     "  THEMES[].BACKBONE_FILE が『いつでも書き換えられる背景設定シート』なのに対し、BACKBONE_STOCK は『時系列で積み上がっていく生のメモ・語り』。全テーマ共通のレンズとして本文作成時に全件参照する（素材の代わりにはしない）。",
-    "  ENABLED=false またはこのブロック自体が空でも動作する（無くても本文作成は BACKBONE_FILE と要約だけで成立する）。"
+    "  ENABLED=false またはこのブロック自体が空でも動作する（無くても本文作成は BACKBONE_FILE と要約だけで成立する）。",
+    "IMAGE_BACKEND = 画像生成の実行方法。エージェント自身（Claude Code / Codex）が画像生成モデルを持たない場合があるため、どう生成するかを明示的に選ぶ。",
+    "  codex_native = 実行中のエージェント自身がCodexで、その場でCodex自身のimage_gen機能を使う（サブプロセス起動なし）。Codexにこのプラグインを導入した場合はセットアップ時に自動選択され、ユーザーに確認しない。",
+    "  codex_cli    = 実行中のエージェントは別（例: Claude Code）だが、別途インストール済みの codex CLI をサブプロセスとして呼び出す（`codex exec ...`）。Codexのサブスクリプションを使う。Claude Code導入時の既定の推奨選択肢。",
+    "  openai_api   = OpenAI Images API を従量課金で直接呼び出す（IMAGE_BACKEND_CONFIG.OPENAI_* を使う）。Codex CLIを使わずAPIキーだけで完結させたい場合。",
+    "  custom_script = その他の画像生成API/ツールをラップした自作スクリプト（IMAGE_BACKEND_CONFIG.CUSTOM_SCRIPT_PATH）を呼び出す。契約は engine/setup_prompt.md の画像生成バックエンド節を参照。",
+    "  Claude Code導入時はセットアップ時にユーザーへ選択を促す（Claude Code自身は画像生成機能を持たないため必須）。後から sns-settings でいつでも変更できる。"
   ],
   "PROFILE": "",
   "CHAT_PROFILE": "",
@@ -58,6 +64,12 @@
     "CHAT_NAME": "バックボーンストック",
     "WEBHOOK_URL": "",
     "TABLE_ID": ""
+  },
+  "IMAGE_BACKEND": "codex_cli",
+  "IMAGE_BACKEND_CONFIG": {
+    "OPENAI_MODEL": "gpt-image-1",
+    "OPENAI_API_KEY_ENV": "OPENAI_API_KEY",
+    "CUSTOM_SCRIPT_PATH": ""
   },
   "INITIAL_LOOKBACK_DAYS": 30,
   "PAGE_SIZE": 50,

@@ -1,5 +1,14 @@
 # 変更履歴
 
+## 1.3.0
+
+- **バックボーンストックのテーブル設計を修正**（実運用での再設計を反映）。固定（プライマリ）フィールドを「タイトル」（内容依存のテキスト）から「ID」（auto_number・自動採番）に変更。「投稿者名」をLark標準のuser型フィールド化し、実在ユーザー（open_id）のときだけ `[{"id": open_id}]` を設定（bot/アプリ投稿は空のまま。名前・アイコンをLarkが自動解決し、SENDER_NAME_MAPのような手動マップが不要に）。書込形式を `{"fields":[...],"rows":[...]}` から `{"create_records":[...]}` に変更。`templates/schema.backbone_stock.json` と `engine/ingest_backbone_stock.py` を全面更新。
+- **新規テーブル設計の原則をドキュメント化**（`AGENTS.md` / `engine/setup_prompt.md`）: 固定フィールドは内容依存にしない。既存データがあるテーブルへの応急処置と、未使用の新規テーブル（ゼロベースで正しい設計を選べる）は状況が違う、という教訓を明記。
+- **画像生成バックエンドの選択機能を追加**（`IMAGE_BACKEND` / `IMAGE_BACKEND_CONFIG`）。実行中のエージェントが画像生成モデルを持つとは限らないため、セットアップ時に明示的に選ぶ:
+  - Claude Code等（画像生成モデルを持たない）で導入した場合 → 必ずユーザーに3択を尋ねる: `codex_cli`（別途インストール済みcodex CLIのサブスクリプション・既定の推奨）／`openai_api`（従量課金のOpenAI Images API）／`custom_script`（自作スクリプト）。
+  - Codex自身に導入した場合 → 確認なしで自動的に `codex_native`（Codex自身のimage_gen機能を直接使用。サブプロセス起動なし）。
+  - `engine/compose_prompt.md` §5-1 を4バックエンド対応に全面改訂。`engine/setup_prompt.md` §0-6（新設）、`engine/settings_prompt.md`（メニュー項目11）、各skill/Codexプロンプトに反映。
+
 ## 1.2.0
 
 - **バックボーンストック（継続蓄積・任意機能）を追加**。特定のチャットに随時書き溜められる思い・方針・エピソードを、テーマを問わず本文作成のレンズとして自動参照する機能（`BACKBONE_STOCK` / `engine/ingest_backbone_stock.py` / `templates/schema.backbone_stock.json`）。テーマ別の `BACKBONE_FILE`（静的・随時編集）とは別物。
