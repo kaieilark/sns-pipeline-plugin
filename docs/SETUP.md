@@ -15,12 +15,11 @@
 ## 1. インストール
 
 ```bash
-git clone <this private repo> ~/sns-pipeline-plugin
-cd ~/sns-pipeline-plugin
-./install.sh
+npm install -g github:kaieilark/sns-pipeline-plugin
+sns-pipeline install
 ```
 
-`install.sh` は Claude Code スキル（`~/.claude/skills/`）と Codex プロンプト（`~/.codex/prompts/`）を導入し、
+（他の導入方法は [`INSTALL.md`](INSTALL.md) 参照）。`install`（または `install.sh`）は Claude Code スキル（`~/.claude/skills/`）と Codex プロンプト（`~/.codex/prompts/`）を導入し、
 ランタイム `~/.sns-pipeline/`（`SNS_PIPELINE_HOME` で変更可）に `config.json` 雛形を用意する。
 
 ## 2. config.json を埋める
@@ -46,6 +45,17 @@ Claude Code自身は画像生成モデルを持たないため、`/sns-setup` �
 **Codex自身にこのプラグインを導入した場合は、確認なしで自動的に `codex_native`**（Codex自身のimage_gen機能をその場で直接使う）に設定される。
 
 後から `/sns-settings` →「画像生成バックエンドを変更する」でいつでも切り替えられる。
+
+#### Codex CLIをまだ持っていない場合（`codex_cli` を選んだとき）
+
+`codex_cli` を選んでも、まだ `codex` コマンドが手元に無ければ、エージェントがその場で導入方法を案内する（`engine/setup_prompt.md` §0-6-1）。要点:
+
+```bash
+node --version           # Node.jsが入っているか確認（無ければ先に導入）
+npm install -g @openai/codex   # Codex CLI 本体を導入
+```
+
+導入後、初回実行時にブラウザでのログイン等の認証が必要（ChatGPTのサブスクリプション、またはOpenAIのAPIキーで認証）。認証の具体的な手順はバージョンにより変わることがあるため、`codex --help` や公式ドキュメントで最新の案内を確認する。導入が難しい場合は `openai_api`（APIキーだけで完結する方式）に切り替えてもよい。
 
 ## 3. テーブルを作る
 
@@ -94,8 +104,20 @@ Claude Code自身は画像生成モデルを持たないため、`/sns-setup` �
 
 ## 5. 素材投入の導線（Chrome拡張機能）
 
-`extension/lark-quick-send/` を Chrome の「パッケージ化されていない拡張機能を読み込む」で導入。
-オプション画面で、各テーマ（＋必要ならバックボーンストック）の取込元チャットに紐づく **Lark カスタムボットの Webhook URL** を登録する
+拡張機能のファイル自体（`extension/lark-quick-send/`）はプラグイン導入時に手元へ揃うが、**Chromeへ読み込む操作だけはブラウザの仕様上どうしても手動**になる（未公開の拡張機能をCLIから無言でインストールすることをChromeが許可していないため）。エージェントに「拡張機能の入れ方が分からない」と伝えれば、以下の手順（`engine/setup_prompt.md` §4-1）をそのまま案内してくれる。
+
+### 5-1. Chromeへの読み込み（クリック単位）
+
+1. Chromeのアドレスバーに `chrome://extensions` と入力してEnter。
+2. 右上の「デベロッパーモード」をONにする。
+3. 「パッケージ化されていない拡張機能を読み込む」をクリック。
+4. `extension/lark-quick-send` フォルダ（配布物内のこのフォルダそのもの）を選択する。
+5. 一覧に「Lark クイック送信」が追加される。ツールバーに出ない場合はパズルアイコン→ピン留めで常時表示できる。
+
+### 5-2. 設定（Webhookの登録）
+
+拡張機能アイコンをクリック（または右クリック→オプション）してオプション画面を開き、
+各テーマ（＋必要ならバックボーンストック）の取込元チャットに紐づく **Lark カスタムボットの Webhook URL** を登録する
 （Webhook は各チャットの「ボット → カスタムボットを追加」で発行。4-1で既に発行済みならその値を使う）。
 以後、Webページの選択テキストやリンクを右クリック →「Lark クイック送信」でテーマ別チャットへ送れる。
 

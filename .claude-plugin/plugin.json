@@ -1,7 +1,7 @@
 {
   "name": "sns-pipeline",
   "description": "Larkチャットに集めた素材から、テーマ別にSNS投稿の下書き（Instagram/Threads/X本文＋参考画像）を作り、Lark Baseへ蓄積する配布用パイプライン。テーマ複数対応・投稿テーブルのテーマ別分割・バックボーン/画像テイストの後編集・画像の骨格を直近10件で非重複。",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "author": {
     "name": "MOMIJI Project"
   }

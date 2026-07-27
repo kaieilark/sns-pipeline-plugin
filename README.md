@@ -52,7 +52,7 @@ cd ~/sns-pipeline-plugin && ./install.sh
 `npm pack` で作った `.tgz`、または配布された tar を渡された場合:
 
 ```bash
-npm install -g ./kaieilark-sns-pipeline-1.5.0.tgz
+npm install -g ./kaieilark-sns-pipeline-1.5.1.tgz
 sns-pipeline install
 ```
 
