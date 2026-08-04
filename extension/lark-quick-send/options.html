@@ -6,114 +6,346 @@
 <style>
   :root {
     color-scheme: light dark;
+
+    --bg: #ffffff;
+    --surface: #f7fafd;
+    --line: #d3e0f0;
+    --line-strong: #6b87a8;
+    --text: #16233d;
+    --text-sub: #5a6b80;
+    --text-url: #4a5b70;
+    --primary: #0f3e8a;
+    --primary-hover: #0b3070;
+    --focus: #1a55c4;
+    --danger: #b3261e;
+    --success: #14663a;
+    --on-primary: #ffffff;
   }
-  body {
-    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-    width: 340px;
-    margin: 0;
-    padding: 16px;
-    background: #ffffff;
-    color: #1a1a1a;
-    line-height: 1.7;
-    line-break: strict;
-    font-feature-settings: "palt";
-  }
+
   @media (prefers-color-scheme: dark) {
-    body {
-      background: #1e1e1e;
-      color: #f0f0f0;
+    :root {
+      --bg: #14181f;
+      --surface: #1c222c;
+      --line: #2c343f;
+      --line-strong: #748193;
+      --text: #e8eef7;
+      --text-sub: #a4b3c7;
+      --text-url: #a4b3c7;
+      --primary: #2b6fd6;
+      --primary-hover: #3d7fe4;
+      --focus: #8ab4f8;
+      --danger: #ffb4aa;
+      --success: #7ee0a4;
+      --on-primary: #ffffff;
     }
   }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    /* ポップアップでは幅384pxで表示され、設定タブとして開いた場合は中央に寄る。 */
+    width: 384px;
+    margin: 0 auto;
+    padding: 18px 18px 16px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+    font-size: 13px;
+    line-height: 1.8;
+    font-feature-settings: "palt";
+    line-break: strict;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+
+  /* --- ヘッダー --- */
+  .head {
+    padding-left: 12px;
+    border-left: 3px solid var(--primary);
+  }
+
   h1 {
+    margin: 0;
     font-size: 15px;
     font-weight: 700;
-    margin: 0 0 12px;
+    letter-spacing: 0.01em;
   }
+
+  .head p {
+    margin: 2px 0 0;
+    color: var(--text-sub);
+    font-size: 12px;
+  }
+
+  /* --- セクション --- */
+  section {
+    margin-top: 18px;
+  }
+
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+
+  .count {
+    color: var(--text-sub);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* --- 送信先リスト --- */
+  /* 入れ子スクロールでカードが途中で切れるのを避け、ポップアップ自体に
+     スクロールを任せる。 */
+  .list {
+    display: grid;
+    gap: 8px;
+  }
+
+  .chat {
+    padding: 11px 12px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+  }
+
+  .chat-name {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+
+  .chat-url {
+    margin: 1px 0 0;
+    color: var(--text-url);
+    font-size: 11px;
+    line-height: 1.6;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  .chat-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 7px;
+  }
+
+  /* 編集中は入力に集中できるよう、カードを前面化する。 */
+  .chat.is-editing {
+    background: var(--bg);
+    border-color: var(--line-strong);
+  }
+
+  .chat.is-editing .field:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .empty {
+    margin: 0;
+    padding: 20px 14px;
+    background: var(--surface);
+    border: 1px dashed var(--line-strong);
+    border-radius: 8px;
+    color: var(--text-sub);
+    font-size: 12px;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  /* --- フォーム --- */
+  .field {
+    margin-bottom: 10px;
+  }
+
   label {
     display: block;
+    margin-bottom: 3px;
     font-size: 12px;
     font-weight: 600;
-    margin-bottom: 4px;
   }
+
+  .hint {
+    color: var(--text-sub);
+    font-size: 11px;
+    font-weight: 400;
+  }
+
   input[type="text"] {
     width: 100%;
-    box-sizing: border-box;
-    padding: 8px;
+    min-height: 44px;
+    padding: 10px 11px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    font-family: inherit;
     font-size: 13px;
-    border: 1px solid #888888;
-    border-radius: 4px;
-    background: #ffffff;
-    color: #1a1a1a;
-    margin-bottom: 10px;
   }
-  @media (prefers-color-scheme: dark) {
-    input[type="text"] {
-      background: #2b2b2b;
-      color: #f0f0f0;
-      border-color: #777777;
-    }
+
+  input[type="text"]::placeholder {
+    color: var(--text-sub);
   }
-  .buttons {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-  }
+
+  /* --- ボタン --- */
   button {
+    min-height: 44px;
+    padding: 11px 14px;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+  }
+
+  .btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+
+  .btn-quiet {
     flex: 1;
     min-height: 44px;
-    padding: 11px 10px;
-    font-size: 13px;
-    font-weight: 600;
-    border: 1px solid #1c4e9c;
-    border-radius: 4px;
-    background: #1c4e9c;
-    color: #ffffff;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #163f7f;
-  }
-  button.secondary {
-    background: #ffffff;
-    color: #1c4e9c;
-  }
-  @media (prefers-color-scheme: dark) {
-    button.secondary {
-      background: #1e1e1e;
-      color: #7fb0ff;
-      border-color: #7fb0ff;
-    }
-  }
-  #status {
+    padding: 10px 8px;
+    background: transparent;
+    border-color: var(--line-strong);
+    color: var(--text);
     font-size: 12px;
-    min-height: 16px;
-    word-break: break-word;
   }
+
+  .btn-quiet:hover {
+    background: var(--bg);
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+
+  .btn-danger {
+    color: var(--danger);
+  }
+
+  .btn-danger:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  .btn-accent {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--on-primary);
+  }
+
+  .btn-accent:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: var(--on-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  /* --- ステータス ---
+     Chromeのポップアップは高さ600pxで打ち切られるため、送信先が増えると
+     ページ末尾に置いた通知が画面外へ出て「押しても無反応」に見えてしまう。
+     画面下端に貼り付けて、スクロール位置によらず必ず見えるようにする。 */
+  #status {
+    position: sticky;
+    bottom: -16px;
+    margin: 12px -18px -16px;
+    padding: 10px 18px 16px;
+    background: var(--bg);
+    border-top: 1px solid transparent;
+    font-size: 12px;
+    overflow-wrap: break-word;
+  }
+
+  #status:empty {
+    display: none;
+  }
+
   #status.error {
-    color: #c0392b;
+    color: var(--danger);
+    border-top-color: var(--line);
   }
+
   #status.success {
-    color: #1e7e34;
+    color: var(--success);
+    border-top-color: var(--line);
   }
-  @media (prefers-color-scheme: dark) {
-    #status.error {
-      color: #ff8a75;
-    }
-    #status.success {
-      color: #6fdc8c;
+
+  #status.pending {
+    color: var(--text-sub);
+    border-top-color: var(--line);
+  }
+
+  /* 送信中はボタンが押せないことを見た目でも示す。 */
+  button:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    button {
+      transition: none;
     }
   }
 </style>
 </head>
 <body>
-  <h1>Lark クイック送信 - 設定</h1>
-  <label for="webhookUrl">Lark Webhook URL</label>
-  <input type="text" id="webhookUrl" placeholder="https://open.larksuite.com/open-apis/bot/v2/hook/...">
-  <div class="buttons">
-    <button id="saveBtn">保存</button>
-    <button id="testBtn" class="secondary">テスト送信</button>
+  <div class="head">
+    <h1>Lark クイック送信</h1>
+    <p>送信先を登録すると、右クリックメニューから送信先を選べます。</p>
   </div>
-  <div id="status"></div>
+
+  <section>
+    <div class="sec-head">
+      <h2>送信先チャット</h2>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>送信先を追加</h2>
+    </div>
+    <div class="field">
+      <label for="chatName">チャット名 <span class="hint">右クリックメニューに表示されます</span></label>
+      <input type="text" id="chatName" maxlength="24" placeholder="例: SNS素材収集" autocomplete="off">
+    </div>
+    <div class="field">
+      <label for="chatUrl">Webhook URL</label>
+      <input type="text" id="chatUrl" placeholder="https://open.larksuite.com/open-apis/bot/v2/hook/..." autocomplete="off">
+    </div>
+    <button type="button" id="addBtn" class="btn-primary">この送信先を追加</button>
+  </section>
+
+  <p id="status" role="status" aria-live="polite"></p>
+
+  <script src="shared.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
